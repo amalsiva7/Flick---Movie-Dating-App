@@ -7,7 +7,12 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-.env  # Environment variables
+/backend/.env  # Environment variables
+/backend/env
+backend/env 
+backend/.env 
+.backend/env 
+.backend/.env 
 *.env  # Environment files if you use multiple
 
 # Virtual Environment folders #
