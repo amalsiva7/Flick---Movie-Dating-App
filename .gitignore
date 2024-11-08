@@ -1,0 +1,72 @@
+myvenv/
+.myvenv/
+# Python #
+###############
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+.env  # Environment variables
+*.env  # Environment files if you use multiple
+
+# Virtual Environment folders #
+###############
+venv/
+.myvenv/
+myvenv/
+env/
+.venv/
+
+# Django #
+###############
+db.sqlite3  # SQLite database (if used for development)
+*.sqlite3
+media/  # User-uploaded files (if applicable)
+staticfiles/  # Django's collected static files
+config/settings/local.py  # Local settings for Django (if used)
+config/settings/.local/  # Local settings directory (if used)
+
+# Django migrations #
+###############
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# React #
+###############
+node_modules/  # Node dependencies
+npm-debug.log
+yarn-error.log
+*.lock  # Lock files from npm or yarn
+
+# Build / Dist #
+###############
+build/
+dist/
+*.cache
+
+# Logs and temp files #
+###############
+*.log
+*.pot
+*.py[cod]
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# IDE files #
+###############
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# macOS #
+###############
+.DS_Store
+
+# PostgreSQL #
+###############
+pgdata/  # PostgreSQL data directory if you're using local database
+*.pgpass  # PostgreSQL password files
