@@ -10,7 +10,8 @@ from rest_framework.exceptions import AuthenticationFailed, ParseError
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from .models import *
+from django.contrib.auth.hashers import make_password
 
 # Create your views here.
 
@@ -25,6 +26,8 @@ class CreateUserView(APIView):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class CreateLoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self,request):
         try:
             email = request.data['email']
@@ -33,8 +36,8 @@ class CreateLoginView(APIView):
             raise ParseError('All fields are required')
         
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = Users.objects.get(email=email)
+        except Users.DoesNotExist:
             raise AuthenticationFailed("Email not found. Please register")
         
         if not user.is_active:
@@ -43,6 +46,7 @@ class CreateLoginView(APIView):
 
         if not check_password(password,user.password):
             raise AuthenticationFailed("Invalid password")
+
         
         user = authenticate(username=email, password=password)
 

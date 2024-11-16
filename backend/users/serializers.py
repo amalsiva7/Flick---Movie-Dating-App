@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from .models import Users
+from django.contrib.auth.hashers import make_password
 
 
 class UserSerializer(serializers.ModelSerializer):
-    confirm_password = serializers.CharField(write_only=True)  # Add confirm_password as a write-only field
+    confirm_password = serializers.CharField(write_only=True) 
     class Meta:
         model = Users
-        field = ['id','name','email','password','confirm_password']
+        fields = ['id','name','email','password','confirm_password']
         extra_kwargs = {'password':{'write_only':True}}
 
     def validate(self, data):
@@ -16,5 +17,9 @@ class UserSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        user = Users.objects.create_user(**validated_data)
-        return user
+        validated_data.pop('confirm_password')
+        validated_data["password"] = make_password(validated_data.get("password"))
+
+        
+        return super().create(validated_data)
+
