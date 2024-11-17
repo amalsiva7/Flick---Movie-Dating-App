@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLoaderAlt } from "react-icons/bi";
 import axios from "axios";
+import axiosInstance from "./axiosInstance";
+import { useNavigate } from "react-router-dom";
+
+
 const baseURL = import.meta.env.VITE_API_BASE_URL;
+
 
 //Registration component
 const RegistrationTile = () => {
@@ -22,6 +27,8 @@ const RegistrationTile = () => {
     number: false,
     specialChar: false,
   });
+
+  const navigate = useNavigate();
 
   // for email suggestions
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -151,14 +158,26 @@ const RegistrationTile = () => {
       setErrors(newErrors);
       return;
     }
+    
+
+    //Last validation check
+    const allValid = Object.keys(formData).every(field => {
+      validateField(field, formData[field]);
+      return !errors[field];
+    });
+    if (!allValid) return;
+    
+    
 
     //if there is no error in the errors
-    if (Object.keys(errors).length === 0) {
-      //API calling
-      const respose = await axios.post('http://127.0.0.1:8000/api/users/register/')
-      if (respose.status === 200){
-        navigate("");
+    try {
+      const response = await axiosInstance.post("/register/", formData);
+      if (response.status === 200) {
+        navigate("/otp");
       }
+    } catch (error) {
+      console.error("Error during registration:", error);
+      setErrors(prev => ({ ...prev, apiError: "Registration failed. Please try again." }));
     }
   };
 
