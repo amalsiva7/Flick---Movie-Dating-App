@@ -2,15 +2,14 @@ import React, { useState, useEffect } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLoaderAlt } from "react-icons/bi";
 import axios from "axios";
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "../../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
-
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 
 //Registration component
-const RegistrationTile = () => {
+const UserRegister = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -171,7 +170,7 @@ const RegistrationTile = () => {
 
     //if there is no error in the errors
     try {
-      const response = await axiosInstance.post("/register/", formData);
+      // const response = await axiosInstance.post("/register/", formData);
       if (response.status === 200) {
         navigate("/otp");
       }
@@ -321,4 +320,4 @@ const RegistrationTile = () => {
   );
 };
 
-export default RegistrationTile;
+export default UserRegister;

@@ -21,6 +21,20 @@ class CreateUserView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+
+        email = request.data.get('email')
+
+        try:
+            existing_user = Users.objects.filter(email=email).first()
+
+            if existing_user:
+                if not existing_user.is_email_verified:
+                    existing_user.delete()
+                else:
+                    return Response({'email':['This is email is already registered']},status=status.HTTP_400_BAD_REQUEST)
+        except Users.DoesNotExist:
+            pass
+
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()  # User is inactive until email is verified
@@ -28,7 +42,7 @@ class CreateUserView(APIView):
             # Send OTP email asynchronously
             send_otp_email.delay(user.id)
 
-            return Response({'message': 'User created successfully. Please verify your email.'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'OTP has been send to your Email.Please verify your email.'}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -50,7 +64,7 @@ class VerifyOTPView(APIView):
             raise ValidationError("User with this email does not exist.")
 
         if user.is_email_verified:
-            return Response({"message": "Your email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Your email is already verified."}, status=status.HTTP_400_BAD_REQUEST)##200
 
         if user.is_otp_expired():
             raise ValidationError("OTP has expired. Please request a new one.")
@@ -64,6 +78,12 @@ class VerifyOTPView(APIView):
 
         return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
 
+
+class VerifyEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self,request):
+        
 
 
 class CreateLoginView(APIView):
@@ -92,7 +112,7 @@ class CreateLoginView(APIView):
         user = authenticate(username=email, password=password)
 
         if user is None:
-            raise AuthenticationFailed('User not found.')
+            raise AuthenticationFailed('Invalid Credentials.')
         
         #JWT
         refresh = RefreshToken.for_user(user)
@@ -104,3 +124,5 @@ class CreateLoginView(APIView):
         }
         
         return Response(context,status=status.HTTP_200_OK)
+    
+

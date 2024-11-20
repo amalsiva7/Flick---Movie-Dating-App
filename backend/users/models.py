@@ -39,9 +39,6 @@ class Users(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=50)
     email = models.EmailField(max_length=100,unique=True)
 
-    otp = models.CharField(max_length=6, null=True, blank=True)
-    otp_created_at = models.DateTimeField(null=True, blank=True)
-
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
     is_staff = models.BooleanField(default=False)
@@ -55,13 +52,6 @@ class Users(AbstractBaseUser, PermissionsMixin):
 
     objects = MyAccountManager()
 
-    def generate_otp(self):
-        otp = ''.join(random.choices(string.digits, k=6))
-        self.otp = otp
-        self.otp_created_at = timezone.now()
-        self.save()
-        return otp
-
-    def is_otp_expired(self):
-        return timezone.now() > self.otp_created_at + timezone.timedelta(minutes=1)
+class Verification(models.Model):
+    
 
