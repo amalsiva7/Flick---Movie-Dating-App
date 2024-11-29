@@ -1,14 +1,26 @@
 from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Users
+from .models import *
+from django.urls import reverse
 
 @shared_task
-def send_otp_email(user_id):
+def send_email(user_id):
     user = Users.objects.get(id=user_id)
-    otp = user.generate_otp()  # Generate OTP and save it
-    subject = "Your OTP Verification Code"
-    message = f"Your OTP code is {otp}. It will expire in 1 minute."
+    verification, _ = Verification.objects.get_or_create(user=user)
+    
+    # Generate OTP and token
+    otp = verification.generate_otp()
+    token = verification.generate_verification_hash()
+
+    #verification link
+    verification_link = f"{settings.FRONTEND_BASE_URL}{reverse('verify')}?token={token}"
+
+    subject = "Your Verification Details"
+    message = (
+        f"Your OTP code is {otp}. It will expire in 5 minutes.\n"
+        f"Alternatively, click this link to verify: {verification_link}"
+    )
     send_mail(
         subject,
         message,

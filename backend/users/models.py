@@ -1,8 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from django.utils.timezone import now
+from datetime import timedelta
 import random
 import string
+import uuid
+import hashlib
 
 # Create your models here.
 
@@ -53,5 +57,27 @@ class Users(AbstractBaseUser, PermissionsMixin):
     objects = MyAccountManager()
 
 class Verification(models.Model):
-    
+    user = models.OneToOneField('Users',on_delete=models.CASCADE,related_name='verification')
+    token = models.CharField(max_length=100)
+    otp = models.CharField(max_length=6, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
 
+
+    def is_expired(self):
+        expiry_time = self.created_at + timedelta(minutes=5)
+        return now() > expiry_time
+    
+    def generate_verification_hash(self):
+        """Generate a unique hash for verification."""
+        data = f"{self.user.email}{self.otp}"
+        hash_val = hashlib.sha256(data.encode()).hexdigest()
+        self.token = hash_val
+        self.save()
+        return self.token
+    
+    def generate_otp(self):
+        """Generate a 6-digit OTP and save it."""
+        self.otp = str(random.randint(100000, 999999))
+        self.save()
+        return self.otp

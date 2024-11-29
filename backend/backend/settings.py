@@ -193,3 +193,4 @@ EMAIL_HOST_PASSWORD = 'rupo klgi mvod pqgz'
 
 
 
+FRONTEND_BASE_URL = "http://localhost:3000"  

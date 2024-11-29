@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Router, Routes } from 'react-router-dom';
 import UserWrapper from './components/wrapper/userWrapper';
-import UserRegister from './components/user_side/auth/userRegister';
 
 
 function App() {
@@ -13,8 +12,7 @@ function App() {
             <Route path='/*' element={<UserWrapper/>}></Route>
           </Routes>        
         </BrowserRouter> */}
-
-        <UserRegister/>
+        <OTP/>
       </>
   );
 };
