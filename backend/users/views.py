@@ -24,10 +24,14 @@ class CreateUserView(APIView):
 
     def post(self, request):
 
+        print(f"**********************************{request.data}************************************")
+
         email = request.data.get('email')
         existing_user = Users.objects.filter(email=email).first()
 
         if existing_user:
+            print(f"existing user : {existing_user}************************************")
+
             if not existing_user.is_email_verified:
                 send_email.delay(existing_user.id)
                 return Response(
@@ -38,7 +42,10 @@ class CreateUserView(APIView):
                 return Response({'email': ['This email is already registered']}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UserSerializer(data=request.data)
+        print(f"Serializer: {serializer}**************************************************")
+        print(f"is_valid :   {serializer.is_valid()}********************************")
         if serializer.is_valid():
+            
             user = serializer.save()  # User is inactive until email is verified
             
             # Send OTP email asynchronously

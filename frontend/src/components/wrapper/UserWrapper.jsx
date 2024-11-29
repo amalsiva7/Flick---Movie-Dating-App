@@ -9,25 +9,25 @@ const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
   const dispatch = useDispatch();
 
-  // const checkAuth = async () => {
-  //   const isAuthenticated = await isAuthUser();
-  //   dispatch(
-  //       setAuthentication({
-  //           id: isAuthenticated.id,
-  //           username: isAuthenticated.name,
-  //           isAuthenticated: isAuthenticated.isAuthenticated,
-  //           isAdmin: isAuthenticated.isAdmin,
-  //       })
-  //   );
-  // };
+  const checkAuth = async () => {
+    const isAuthenticated = await isAuthUser();
+    dispatch(
+        setAuthentication({
+            id: isAuthenticated.id,
+            username: isAuthenticated.name,
+            isAuthenticated: isAuthenticated.isAuthenticated,
+            isAdmin: isAuthenticated.isAdmin,
+        })
+    );
+  };
 
 
 
-  // useEffect(()=>{
-  //   if(!authentication_user){
-  //       checkAuth();
-  //   }
-  // },[authentication_user]);
+  useEffect(()=>{
+    if(!authentication_user){
+        checkAuth();
+    }
+  },[authentication_user]);
 
 
 
@@ -37,7 +37,7 @@ const UserWrapper = () => {
       element: <HomePage />
     },
     {
-      path: "/register",
+      path: "/",
       element: <UserRegister />
     },
     {

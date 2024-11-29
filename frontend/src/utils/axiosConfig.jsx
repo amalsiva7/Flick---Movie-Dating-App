@@ -13,7 +13,7 @@ axiosInstance.interceptors.request.use(
 
         const token = localStorage.getItem("token");
 
-        if (token && !config.url.includes("/register")&& !config.url.includes("/otp")){
+        if (token && !config.url.includes("users/register")&& !config.url.includes("users/otp")){
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -31,7 +31,7 @@ axiosInstance.interceptors.response.use(
         if (error.response.status === 401) {
           // Handle unauthorized responses
           alert("Session expired. Redirecting to login...");
-          window.location.href = "/login";
+          window.location.href = "users/login";
         }
       }
       return Promise.reject(error);

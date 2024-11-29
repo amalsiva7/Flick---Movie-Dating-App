@@ -170,14 +170,32 @@ const UserRegister = () => {
 
     //if there is no error in the errors
     try {
-      // const response = await axiosInstance.post("/register/", formData);
+      const response = await axiosInstance.post("users/register/", formData);
       if (response.status === 200) {
         navigate("/otp");
       }
     } catch (error) {
-      console.error("Error during registration:", error);
-      setErrors(prev => ({ ...prev, apiError: "Registration failed. Please try again." }));
+      if (error.response) {
+        // Handle specific status codes
+        if (error.response.status === 409) {
+          navigate("/otp"); // Navigate to OTP for 409 Conflict
+        } else {
+          console.error("Error during registration:", error);
+          setErrors((prev) => ({
+            ...prev,
+            apiError: "Registration failed. Please try again.",
+          }));
+        }
+      } else {
+        // Handle network errors or other issues
+        console.error("Unexpected error during registration:", error);
+        setErrors((prev) => ({
+          ...prev,
+          apiError: "An unexpected error occurred. Please try again later.",
+        }));
+      }
     }
+    
   };
 
   const handleSuggestionClick = (suggestion) => {

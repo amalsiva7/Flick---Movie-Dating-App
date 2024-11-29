@@ -1,5 +1,10 @@
+import React from 'react';
 import { BrowserRouter, Route, Router, Routes } from 'react-router-dom';
 import UserWrapper from './components/wrapper/userWrapper';
+import HomePage from './pages/homePage';
+import UserRegister from './components/user_side/auth/userRegister';
+import OTP from './components/user_side/auth/OTP';
+
 
 
 function App() {
@@ -7,12 +12,14 @@ function App() {
   return (
       <>
       
-        {/* <BrowserRouter>
+        <BrowserRouter>
           <Routes>
-            <Route path='/*' element={<UserWrapper/>}></Route>
+            <Route path='/' element={<UserRegister/>}></Route>
+            <Route path='/otp' element={<OTP/>}></Route>
+            <Route path='/home' element={<HomePage/>}></Route>
           </Routes>        
-        </BrowserRouter> */}
-        <OTP/>
+        </BrowserRouter>
+        
       </>
   );
 };
