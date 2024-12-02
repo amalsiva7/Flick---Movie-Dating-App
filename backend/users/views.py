@@ -64,15 +64,18 @@ class VerificationView(APIView):
 
     def post(self, request):
 
+        print(f"data : {request.data.get('email')}")
+        print(f"data : {request.data.get('otp')}****--------******------******")
+
         serializer = VerificationSerializer(data=request.data)
+        print(f"OTP Serializer: {serializer}**************************************************")
+        print(f"OTP is_valid :   {serializer.is_valid()}********************************")
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         otp = request.data.get('otp')
         token = request.query_params.get('token')
         email = request.data.get('email')
-
-        
 
         try:
             user = Users.objects.get(email=email)
@@ -82,6 +85,7 @@ class VerificationView(APIView):
                 return Response({"message": "User is already verified."}, status=status.HTTP_200_OK)
 
             if verification.is_expired():
+                print(verification.is_expired)
                 return Response({"error": "OTP has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
             
 

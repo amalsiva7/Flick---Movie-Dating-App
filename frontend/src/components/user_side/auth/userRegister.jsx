@@ -170,14 +170,18 @@ const UserRegister = () => {
 
     //if there is no error in the errors
     try {
+      console.log(formData);
       const response = await axiosInstance.post("users/register/", formData);
       if (response.status === 200) {
-        navigate("/otp");
+        sessionStorage.setItem("email", formData.email);
+        console.log(formData.email,"asdfasdfasdfasdfasdf")
+        // navigate("/otp");
       }
     } catch (error) {
       if (error.response) {
         // Handle specific status codes
         if (error.response.status === 409) {
+          sessionStorage.setItem("email", formData.email);
           navigate("/otp"); // Navigate to OTP for 409 Conflict
         } else {
           console.error("Error during registration:", error);

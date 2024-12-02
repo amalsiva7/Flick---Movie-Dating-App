@@ -4,6 +4,7 @@ import UserWrapper from './components/wrapper/userWrapper';
 import HomePage from './pages/homePage';
 import UserRegister from './components/user_side/auth/userRegister';
 import OTP from './components/user_side/auth/OTP';
+import Login from './components/user_side/auth/Login';
 
 
 
@@ -16,6 +17,7 @@ function App() {
           <Routes>
             <Route path='/' element={<UserRegister/>}></Route>
             <Route path='/otp' element={<OTP/>}></Route>
+            <Route path='/login' element={<Login/>}></Route>
             <Route path='/home' element={<HomePage/>}></Route>
           </Routes>        
         </BrowserRouter>

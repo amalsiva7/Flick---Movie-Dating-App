@@ -65,7 +65,10 @@ class Verification(models.Model):
 
 
     def is_expired(self):
-        expiry_time = self.created_at + timedelta(minutes=5)
+        expiry_time = self.created_at + timedelta(hours=10)
+        print(f"Created At: {self.created_at}")
+        print(f"Expiry Time: {expiry_time}")
+        print(f"Current Time (now): {now()}")
         return now() > expiry_time
     
     def generate_verification_hash(self):
@@ -79,5 +82,6 @@ class Verification(models.Model):
     def generate_otp(self):
         """Generate a 6-digit OTP and save it."""
         self.otp = str(random.randint(100000, 999999))
+        self.created_at = now()
         self.save()
         return self.otp

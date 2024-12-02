@@ -3,17 +3,30 @@ import { FaSpinner } from "react-icons/fa";
 import axiosInstance from "../../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 
-const OTP = ({ email }) => {
+const OTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const email = sessionStorage.getItem("email");
 
   // Focus on the first input field on component mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+
+  useEffect(() => {
+    const email = sessionStorage.getItem("email");
+    console.log("Email retrieved from sessionStorage:", email);
+    if (!email) {
+      console.error("Email not found in sessionStorage");
+      // Handle the case where email is not found (maybe redirect to signup page)
+    }
+  }, []);
+  
+
 
   // Handle OTP input changes
   const handleChange = (element, index) => {
@@ -75,6 +88,7 @@ const OTP = ({ email }) => {
       }
     } catch (error) {
       if (error.response && error.response.status === 400) {
+        console.error("Error verifying OTP:", error);
       } else {
         console.error("Error verifying OTP:", error);
       }
@@ -83,7 +97,7 @@ const OTP = ({ email }) => {
     }
   };
 
-  // Handle OTP resend
+// Handle OTP resend
   const handleResend = async () => {
     setLoading(true);
 
