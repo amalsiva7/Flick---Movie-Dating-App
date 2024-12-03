@@ -4,8 +4,8 @@ import { BiLoaderAlt } from "react-icons/bi";
 import axios from "axios";
 import axiosInstance from "../../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from 'react-hot-toast';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 
 //Registration component
@@ -28,6 +28,8 @@ const UserRegister = () => {
   });
 
   const navigate = useNavigate();
+
+
 
   // for email suggestions
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -171,20 +173,33 @@ const UserRegister = () => {
     //if there is no error in the errors
     try {
       console.log(formData);
+
       const response = await axiosInstance.post("users/register/", formData);
-      if (response.status === 200) {
+
+      if (response.status === 201) {
+
+        await toast.success("User Already Registered! Please check your email for verification.");
         sessionStorage.setItem("email", formData.email);
+
         console.log(formData.email,"asdfasdfasdfasdfasdf")
-        // navigate("/otp");
+
+        navigate("/otp");
       }
     } catch (error) {
       if (error.response) {
+
         // Handle specific status codes
         if (error.response.status === 409) {
+
+          await toast.success("User Already Registered! Please check your email for verification.");
           sessionStorage.setItem("email", formData.email);
+
           navigate("/otp"); // Navigate to OTP for 409 Conflict
         } else {
+
+          await toast.error("An unexpected error occurred. Please try again later.");
           console.error("Error during registration:", error);
+
           setErrors((prev) => ({
             ...prev,
             apiError: "Registration failed. Please try again.",
@@ -192,6 +207,7 @@ const UserRegister = () => {
         }
       } else {
         // Handle network errors or other issues
+        await toast.error("An unexpected error occurred. Please try again later.");
         console.error("Unexpected error during registration:", error);
         setErrors((prev) => ({
           ...prev,
@@ -223,6 +239,11 @@ const UserRegister = () => {
               name="username"
               value={formData.username}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === " ") {
+                  e.preventDefault();
+                }
+              }}
               className={`mt-1 block w-full px-3 py-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
               aria-label="Username"
               aria-invalid={errors.username ? "true" : "false"}
@@ -241,6 +262,11 @@ const UserRegister = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === " ") {
+                  e.preventDefault();
+                }
+              }}
               className={`mt-1 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
               aria-label="Email"
               aria-invalid={errors.email ? "true" : "false"}
@@ -273,6 +299,11 @@ const UserRegister = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === " ") {
+                    e.preventDefault();
+                  }
+                }}
                 className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
                 aria-label="Password"
                 aria-invalid={errors.password ? "true" : "false"}
@@ -313,6 +344,11 @@ const UserRegister = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === " ") {
+                  e.preventDefault();
+                }
+              }}
               className={`mt-1 block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
               aria-label="Confirm password"
               aria-invalid={errors.confirmPassword ? "true" : "false"}
@@ -324,7 +360,7 @@ const UserRegister = () => {
 
           {/* Submit Button */}
           <div className="flex items-center justify-center h-full">
-            <button
+            <button 
               type="submit"
               disabled={isLoading || Object.keys(errors).length > 0}
               className="w-[157px] items-center justify-center px-4 py-3 border border-transparent rounded-2xl shadow-sm text-base font-medium text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -334,6 +370,7 @@ const UserRegister = () => {
               ) : (
                 "Sign Up"
               )}
+
             </button>
           </div>
         </form>

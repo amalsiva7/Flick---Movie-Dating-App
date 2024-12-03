@@ -1,57 +1,157 @@
-import React, { useState } from 'react'
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
+import axiosInstance from "../../../utils/axiosConfig";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setAuthentication } from "../../../Redux/Authentication/authenticationSlice";
+import { jwtDecode } from "jwt-decode";
 
-function Login() {
-    const [email,setEmail] = useState("");
-    const [password,setPassword] = useState("");
-    
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validatePassword = (password) => password.length >= 8;
+
+  const validateField = (name, value) => {
+    const newErrors = { ...errors };
+
+    if (name === "email") {
+      if (!value) {
+        newErrors.email = "Email is required";
+      } else if (!validateEmail(value)) {
+        newErrors.email = "Invalid email format";
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    if (name === "password") {
+      if (!value) {
+        newErrors.password = "Password is required";
+      } else if (!validatePassword(value)) {
+        newErrors.password = "Password must be at least 8 characters";
+      } else {
+        delete newErrors.password;
+      }
+    }
+
+    setErrors(newErrors);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await axiosInstance.post("users/login/", formData);
+      console.log("inside try: LOGIN.jsx",response)
+      if (response.status === 200) {
+        localStorage.setItem("access", response.data.access);
+        localStorage.setItem("refresh", response.data.refresh);
+
+
+        const decodedToken = jwtDecode(response.data.access);
+
+        dispatch(
+            setAuthentication({
+                id:decodedToken.user_id,
+                username: decodedToken.username,
+                isAutheticated:decodedToken.isAutheticated,
+                isAdmin:decodedToken.isAdmin,
+            })
+        );
+
+        if(decodedToken.isAdmin){
+            // navigate("/admin");
+        }else{
+            navigate("/userHome");
+        }
+
+        toast.success("Login Success");
+
+      }
+    } catch (error) {
+      setErrors({ apiError: error.response?.data?.message || "An error occurred during login. Please try again" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isFormValid =
+    formData.email &&
+    formData.password &&
+    Object.keys(errors).length === 0;
 
   return (
     <div className="min-h-screen bg-custom-light-gray flex items-center justify-center px-4 py-8">
-      <div className="w-[38.125rem] h-[39.125rem] bg-white rounded-2xl shadow-xl p-8">
-        <h2 className="text-3xl font-poppins text-center text-gray-800 mb-2">Sign Up</h2>
+      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Login</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {/* Email Field */}
           <div className="relative">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email
+            </label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`mt-1 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
-              aria-label="Email"
+              onKeyDown={(e) => {
+                if (e.key === " ") {
+                  e.preventDefault();
+                }
+              }}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
               aria-invalid={errors.email ? "true" : "false"}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              disabled={isLoading}
             />
-            {emailSuggestions.length > 0 && (
-              <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 shadow-lg">
-                {emailSuggestions.map((suggestion, index) => (
-                  <li
-                    key={index}
-                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            )}
             {errors.email && (
-              <p className="mt-1 text-sm text-red-600" role="alert">{errors.email}</p>
+              <p
+                id="email-error"
+                className="mt-1 text-sm text-red-500"
+                role="alert"
+                aria-live="assertive"
+              >
+                {errors.email}
+              </p>
             )}
           </div>
 
           {/* Password Field */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <div className="relative">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -59,58 +159,83 @@ function Login() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
-                aria-label="Password"
+                onKeyDown={(e) => {
+                    if (e.key === " ") {
+                      e.preventDefault();
+                    }
+                  }}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
                 aria-invalid={errors.password ? "true" : "false"}
+                aria-describedby={errors.password ? "password-error" : undefined}
+                autoComplete="current-password"
+                disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <FiEyeOff className="text-gray-500" /> : <FiEye className="text-gray-500" />}
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
-            <div className="mt-2 flex gap-1">
-              {[...Array(4)].map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 w-full rounded ${index < passwordStrength ? 'bg-green-500' : 'bg-gray-200'}`}
-                />
-              ))}
-            </div>
-            <div className="text-xs text-red-600 mt-2">
-              {!passwordRequirements.capitalLetter && <span>*Include a capital letter, </span>}
-              {!passwordRequirements.number && <span>a number, </span>}
-              {!passwordRequirements.specialChar && <span>a special character, </span>}
-            </div>
             {errors.password && (
-              <p className="mt-1 text-sm text-red-600" role="alert">{errors.password}</p>
+              <p
+                id="password-error"
+                className="mt-1 text-sm text-red-500"
+                role="alert"
+                aria-live="assertive"
+              >
+                {errors.password}
+              </p>
             )}
           </div>
 
-          {/* Confirm Password Field */}
+          {/* API Error Message */}
+          {errors.apiError && (
+            <p
+              className="mt-1 text-sm text-red-500"
+              role="alert"
+              aria-live="assertive"
+            >
+              {errors.apiError}
+            </p>
+          )}
 
           {/* Submit Button */}
-          <div className="flex items-center justify-center h-full">
-            <button
-              type="submit"
-              disabled={isLoading || Object.keys(errors).length > 0}
-              className="w-[157px] items-center justify-center px-4 py-3 border border-transparent rounded-2xl shadow-sm text-base font-medium text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <BiLoaderAlt className="animate-spin h-5 w-5" />
-              ) : (
-                "Sign Up"
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !isFormValid}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {isLoading ? (
+              <>
+                <FaSpinner className="animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Login"
+            )}
+          </button>
         </form>
+
+        {/* Additional Options */}
+        <div className="mt-4 text-center">
+          <a href="/forgot-password" className="text-blue-600 hover:underline">
+            Forgot Password?
+          </a>
+          <p className="mt-2">
+            Don't have an account?{" "}
+            <a href="/signup" className="text-blue-600 hover:underline">
+              Sign Up
+            </a>
+          </p>
+        </div>
       </div>
     </div>
+  );
+};
 
-  )
-}
-
-export default Login
+export default Login;

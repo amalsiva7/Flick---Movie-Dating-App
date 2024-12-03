@@ -30,12 +30,12 @@ class CreateUserView(APIView):
         existing_user = Users.objects.filter(email=email).first()
 
         if existing_user:
-            print(f"existing user : {existing_user}************************************")
+            print(f"Inside....existing user : {existing_user}************************************")
 
             if not existing_user.is_email_verified:
                 send_email.delay(existing_user.id)
                 return Response(
-                    {'message': ['This email already exists but is not verified. Please verify.']},
+                    {'message': ['This email already exists but is not verified. Please verify using the otp/ link send to your email.']},
                     status=status.HTTP_409_CONFLICT
                 )
             else:
@@ -110,7 +110,6 @@ class VerificationView(APIView):
             return Response({"error": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
         except Verification.DoesNotExist:
             return Response({"error": "No verification record found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 

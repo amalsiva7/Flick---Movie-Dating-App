@@ -79,9 +79,10 @@ class Verification(models.Model):
         self.save()
         return self.token
     
-    def generate_otp(self):
-        """Generate a 6-digit OTP and save it."""
-        self.otp = str(random.randint(100000, 999999))
-        self.created_at = now()
-        self.save()
+    def generate_otp(self, force=False):
+        """Generate a 6-digit OTP only if it's not already set or forced."""
+        if not self.otp or force:
+            self.otp = str(random.randint(100000, 999999))
+            self.created_at = now()
+            self.save()
         return self.otp

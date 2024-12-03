@@ -5,6 +5,8 @@ import HomePage from './pages/homePage';
 import UserRegister from './components/user_side/auth/userRegister';
 import OTP from './components/user_side/auth/OTP';
 import Login from './components/user_side/auth/Login';
+import { Provider } from 'react-redux';
+import userStore from './Redux/userStore';
 
 
 
@@ -14,12 +16,13 @@ function App() {
       <>
       
         <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<UserRegister/>}></Route>
-            <Route path='/otp' element={<OTP/>}></Route>
-            <Route path='/login' element={<Login/>}></Route>
-            <Route path='/home' element={<HomePage/>}></Route>
-          </Routes>        
+          <Provider store={userStore}>
+            <Routes>
+              <Route path='/*' element={<UserWrapper/>}/>
+            </Routes>       
+
+          </Provider>
+           
         </BrowserRouter>
         
       </>

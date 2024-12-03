@@ -27,7 +27,6 @@ const OTP = () => {
   }, []);
   
 
-
   // Handle OTP input changes
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return; // Prevent non-numeric input

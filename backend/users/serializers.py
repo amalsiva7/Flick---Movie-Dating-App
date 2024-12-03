@@ -50,12 +50,14 @@ class VerificationSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+    print(f"Email : {email}*****************************")
+    print(f"pass : {password}*****************************")
 
     def validate(self, data):
         try:
             user = Users.objects.get(email=data['email'])
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"email": "Email not found plese Register"})
+            raise serializers.ValidationError({"email": "Email not found please Register"})
 
         if not check_password(data['password'], user.password):
             raise serializers.ValidationError({"password":"Invalid password"})

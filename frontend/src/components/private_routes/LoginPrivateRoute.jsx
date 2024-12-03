@@ -9,14 +9,18 @@ function LoginPrivateRoute({children}) {
 
 
     useEffect(() => {
-        const fetchData = async()=>{
-            const authInfo = await isAuthUser();
-            setisAuthenticated(authInfo.isAuthenticated);
-            
-        }
-    },[]);
+        const fetchData = async () => {
+          const authInfo = await isAuthUser();
+          setisAuthenticated(authInfo.isAuthenticated);
+          setTimeout(() => {
+            setIsLoading(false);
+          }, 2000);
+        };
+        fetchData();
+      }, []);
+    
     if(isAuthenticated){
-        return <Navigate to="/home"/>
+        return <Navigate to="/userHome"/>
     }
   return children;
 }
