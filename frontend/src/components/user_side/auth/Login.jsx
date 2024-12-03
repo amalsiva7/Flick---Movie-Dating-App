@@ -208,7 +208,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading || !isFormValid}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full bg-yellow-400 text-black py-2 px-4 rounded-lg hover:bg-yellow-300 focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -228,7 +228,7 @@ const Login = () => {
           </a>
           <p className="mt-2">
             Don't have an account?{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
+            <a href="/" className="text-blue-600 hover:underline">
               Sign Up
             </a>
           </p>

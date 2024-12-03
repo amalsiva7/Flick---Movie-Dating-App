@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import isAuthUser from '../../utils/isAuth';
 import { Navigate } from 'react-router-dom';
+import HeartLoader from '../loader/HeartLoader';
 
 
 function PrivateRoutes({children}) {
@@ -18,8 +19,14 @@ function PrivateRoutes({children}) {
         };
         fetchData();
       }, []);
-    
-    if(isAuthenticated){
+      if(isLoading){
+        return(
+        <div>
+          <HeartLoader/>
+        </div>
+        )
+      }
+    if(!isAuthenticated){
         return <Navigate to="/login"/>
     }
   return children;

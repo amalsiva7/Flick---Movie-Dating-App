@@ -10,22 +10,12 @@ const OTP = () => {
   const inputRefs = useRef([]);
   const navigate = useNavigate();
   const email = sessionStorage.getItem("email");
+  const [debouncedOtp, setDebouncedOtp] = useState(""); // Store debounced OTP
 
   // Focus on the first input field on component mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
-
-
-  useEffect(() => {
-    const email = sessionStorage.getItem("email");
-    console.log("Email retrieved from sessionStorage:", email);
-    if (!email) {
-      console.error("Email not found in sessionStorage");
-      // Handle the case where email is not found (maybe redirect to signup page)
-    }
-  }, []);
-  
 
   // Handle OTP input changes
   const handleChange = (element, index) => {
@@ -50,7 +40,7 @@ const OTP = () => {
     }
   };
 
-  // Validate the OTP for numeric input
+  // Validate OTP for numeric input
   const validateOTP = (code) => {
     const otpRegex = /^[0-9]{6}$/;
     if (code.length === 6 && !otpRegex.test(code)) {
@@ -60,12 +50,21 @@ const OTP = () => {
     }
   };
 
-  // Submit the OTP for verification
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const otpCode = otp.join("");
+  // Debounced function for OTP verification
+  const debouncedSubmit = (otpCode) => {
+    clearTimeout(debouncedOtp);
+    setDebouncedOtp(otpCode); // Update debounced OTP
 
-    // Ensure all digits are filled
+    // Delay for debouncing
+    setTimeout(async () => {
+      if (otpCode.length === 6) {
+        handleSubmit(otpCode);
+      }
+    }, 500); // Adjust debounce delay as needed (e.g., 500ms)
+  };
+
+  // Submit the OTP for verification
+  const handleSubmit = async (otpCode) => {
     if (otpCode.length !== 6) {
       setError("Please enter all digits");
       return;
@@ -82,7 +81,6 @@ const OTP = () => {
       const response = await axiosInstance.post("users/verify/", formData);
 
       if (response.status === 200) {
-        
         navigate("/login");
       }
     } catch (error) {
@@ -96,13 +94,12 @@ const OTP = () => {
     }
   };
 
-// Handle OTP resend
+  // Handle OTP resend
   const handleResend = async () => {
     setLoading(true);
 
     try {
       const response = await axiosInstance.post("users/resend-otp/", { email });
-      
     } catch (error) {
       console.error("Error resending OTP:", error);
     } finally {
@@ -149,7 +146,7 @@ const OTP = () => {
 
           {/* Submit Button */}
           <button
-            onClick={handleSubmit}
+            onClick={() => debouncedSubmit(otp.join(""))}
             disabled={loading || otp.join("").length !== 6}
             className="w-full py-3 bg-blue-600 text-white rounded-lg
                      hover:bg-blue-700 focus:outline-none focus:ring-2

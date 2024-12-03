@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import isAuthUser from '../../utils/isAuth';
 import { Navigate } from 'react-router-dom';
+import HeartLoader from '../loader/HeartLoader';
 
 
 function LoginPrivateRoute({children}) {
@@ -11,6 +12,7 @@ function LoginPrivateRoute({children}) {
     useEffect(() => {
         const fetchData = async () => {
           const authInfo = await isAuthUser();
+          console.log(authInfo,"*************")
           setisAuthenticated(authInfo.isAuthenticated);
           setTimeout(() => {
             setIsLoading(false);
@@ -19,6 +21,14 @@ function LoginPrivateRoute({children}) {
         fetchData();
       }, []);
     
+    if(isLoading){
+      return(
+        <div>
+          <HeartLoader/>
+        </div>
+        
+      )
+    }
     if(isAuthenticated){
         return <Navigate to="/userHome"/>
     }

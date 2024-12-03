@@ -54,10 +54,11 @@ const UserWrapper = () => {
 
     {
       path: "/",
-      element: (
-      <LoginPrivateRoute>
+      element: 
+      (<LoginPrivateRoute>
         <UserRegister/>
       </LoginPrivateRoute>)
+      
     },
     {
       path: "/otp",

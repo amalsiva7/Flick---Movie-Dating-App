@@ -374,6 +374,14 @@ const UserRegister = () => {
             </button>
           </div>
         </form>
+        <div className="mt-4 text-center">
+          <p className="mt-2">
+            Already have an account?{" "}
+            <a href="/login" className="text-blue-600 hover:underline">
+              Log In
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
