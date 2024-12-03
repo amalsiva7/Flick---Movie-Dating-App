@@ -7,6 +7,10 @@ import OTP from '../user_side/auth/OTP';
 import Login from '../user_side/auth/Login';
 import isAuthUser from '../../utils/isAuth';
 import LoginPrivateRoute from '../private_routes/LoginPrivateRoute';
+import UserHomeHeader from '../user_side/userHomePage/userHomeHeader';
+import UserHome from '../user_side/userHomePage/userHome';
+import PrivateRoutes from '../private_routes/PrivateRoute';
+import { setAuthentication } from '../../Redux/Authentication/authenticationSlice';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -47,10 +51,7 @@ const UserWrapper = () => {
 
 
   const routes = useRoutes([
-    {
-      path: "/userHome",
-      element: <HomePage />
-    },
+
     {
       path: "/",
       element: (
@@ -68,6 +69,14 @@ const UserWrapper = () => {
         <LoginPrivateRoute>
           <Login/>
         </LoginPrivateRoute>
+      )
+    },
+    {
+      path: "/userHome",
+      element: (
+        <PrivateRoutes>
+          <UserHome/>
+        </PrivateRoutes>
       )
     },
   ]);
