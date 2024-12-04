@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useRoutes } from 'react-router-dom';
 import HomePage from '../../pages/homePage';
@@ -31,11 +31,13 @@ const UserWrapper = () => {
 
 
   useEffect(() => {
-    if (!authentication_user || !authentication_user.isAuthenticated) {
+    if (!authentication_user?.isAuthenticated) {
       checkAuth();
-    } else {
-      if (authentication_user.isAuthenticated) {
-        navigate('/userHome'); // Redirect to the home page if authenticated
+    } else if (authentication_user.isAuthenticated) {
+      if (authentication_user.isAdmin) {
+        navigate('/admin'); // Adjust this path as needed
+      } else {
+        navigate('/userHome');
       }
     }
   }, [authentication_user, dispatch, navigate]);

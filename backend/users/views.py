@@ -114,15 +114,50 @@ class VerificationView(APIView):
 
 
 
+
+
+
+##Resend OTP
+class ResendOtpView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Users.objects.get(email=email)
+
+            if not user.is_email_verified:  # Check if the user is not verified
+                # Trigger resend OTP via Celery task and pass 'force=True' to regenerate OTP
+                verification = Verification.objects.get(user=user)
+                verification.generate_otp(force=True)  # Regenerate OTP
+                send_email.delay(user.id)  # Send the updated OTP
+
+                return Response({"message": "OTP has been resent to your email. Please verify."}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Users.DoesNotExist:
+            return Response({"error": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
 ##Login View
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self,request):
         serializer = LoginSerializer(data=request.data)
+        print(serializer.is_valid(),"********************SERIALIZER IN LOGIN")
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
+            refresh['isAdmin'] = user.is_superuser
 
             return Response(
                 {

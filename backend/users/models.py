@@ -65,10 +65,7 @@ class Verification(models.Model):
 
 
     def is_expired(self):
-        expiry_time = self.created_at + timedelta(hours=10)
-        print(f"Created At: {self.created_at}")
-        print(f"Expiry Time: {expiry_time}")
-        print(f"Current Time (now): {now()}")
+        expiry_time = self.created_at + timedelta(minutes=5)
         return now() > expiry_time
     
     def generate_verification_hash(self):

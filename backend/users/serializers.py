@@ -49,9 +49,7 @@ class VerificationSerializer(serializers.Serializer):
 ##Login
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-    print(f"Email : {email}*****************************")
-    print(f"pass : {password}*****************************")
+    password = serializers.CharField(write_only=True)    
 
     def validate(self, data):
         try:

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaSpinner } from "react-icons/fa";
 import axiosInstance from "../../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const OTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -77,38 +78,57 @@ const OTP = () => {
       const formData = new FormData();
       formData.append("otp", otpCode);
       formData.append("email", email);
-
+    
       const response = await axiosInstance.post("users/verify/", formData);
-
+    
       if (response.status === 200) {
+        const message = response.data.message || "OTP verification successful";
+        toast.success(message); // Success toast
         navigate("/login");
       }
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        console.error("Error verifying OTP:", error);
+      if (error.response) {
+        const { status, data } = error.response;
+    
+        if (status === 400) {
+          toast.error(data.error || "Invalid OTP or token."); // Handle invalid OTP or expired OTP
+        } else if (status === 404) {
+          toast.error(data.error || "User or verification record not found."); // Handle missing user/verification record
+        } else {
+          toast.error("An unexpected error occurred. Please try again.");
+        }
       } else {
-        console.error("Error verifying OTP:", error);
+        toast.error("Network error. Please check your connection.");
       }
     } finally {
       setLoading(false);
     }
+    
   };
 
   // Handle OTP resend
   const handleResend = async () => {
     setLoading(true);
-
+  
     try {
       const response = await axiosInstance.post("users/resend-otp/", { email });
+  
+      if (response.status === 200) {
+        toast.success("OTP has been resent to your email. Please verify.");
+      } else {
+        toast.error(response.data.message || "An error occurred while resending OTP.");
+      }
     } catch (error) {
+      toast.error("Error resending OTP. Please try again.");
       console.error("Error resending OTP:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-custom-light-gray flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Enter OTP</h1>

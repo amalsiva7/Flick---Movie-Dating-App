@@ -190,14 +190,14 @@ const UserRegister = () => {
 
         // Handle specific status codes
         if (error.response.status === 409) {
-
-          await toast.success("User Already Registered! Please check your email for verification.");
+          await toast("User Already Registered! Please check your email for verification.", {icon: '⚠️',});
           sessionStorage.setItem("email", formData.email);
 
           navigate("/otp"); // Navigate to OTP for 409 Conflict
         } else {
 
-          await toast.error("An unexpected error occurred. Please try again later.");
+          await toast.error(error.response.data?.message || "An error occurred during registration.");
+          console.log(error.response.data?.message,"*******************************")
           console.error("Error during registration:", error);
 
           setErrors((prev) => ({

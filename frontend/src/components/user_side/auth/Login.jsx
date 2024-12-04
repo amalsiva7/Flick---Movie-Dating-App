@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAuthentication } from "../../../Redux/Authentication/authenticationSlice";
 import { jwtDecode } from "jwt-decode";
+import toast from "react-hot-toast";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -69,6 +70,8 @@ const Login = () => {
 
 
         const decodedToken = jwtDecode(response.data.access);
+        console.log("Decoded Token: ", decodedToken);
+        console.log("isAdmin****************",decodedToken.isAdmin)
 
         dispatch(
             setAuthentication({
@@ -80,7 +83,7 @@ const Login = () => {
         );
 
         if(decodedToken.isAdmin){
-            // navigate("/admin");
+            navigate("/admin");
         }else{
             navigate("/userHome");
         }
@@ -90,6 +93,7 @@ const Login = () => {
       }
     } catch (error) {
       setErrors({ apiError: error.response?.data?.message || "An error occurred during login. Please try again" });
+      toast.error("Error occured during login. Please try again.")
     } finally {
       setIsLoading(false);
     }

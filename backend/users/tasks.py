@@ -2,7 +2,6 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import *
-from django.urls import reverse
 
 @shared_task
 def send_email(user_id):
@@ -10,11 +9,13 @@ def send_email(user_id):
     verification, _ = Verification.objects.get_or_create(user=user)
     
     # Generate OTP and token
-    otp = verification.generate_otp()
+    otp = verification.generate_otp(force = True)
     token = verification.generate_verification_hash()
 
     #verification link
-    verification_link = f"{settings.FRONTEND_BASE_URL}{reverse('verify')}?token={token}"
+    # Updated verification link
+    verification_link = f"{settings.FRONTEND_BASE_URL}/verify?token={token}"
+
 
     subject = "Your Verification Details"
     message = (
