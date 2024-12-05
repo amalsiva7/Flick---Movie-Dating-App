@@ -91,12 +91,31 @@ const Login = () => {
         toast.success("Login Success");
 
       }
-    } catch (error) {
-      setErrors({ apiError: error.response?.data?.message || "An error occurred during login. Please try again" });
-      toast.error("Error occured during login. Please try again.")
-    } finally {
+    }
+    catch (error) {
+      console.log(error.response); // Log the full error response for debugging
+    
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.email &&
+        error.response.data.email[0] === "Your account is blocked. Please contact support for assistance"
+      ) {
+        toast.error(error.response.data.email[0]);  // Blocked account error message
+      } else {
+        toast.error("Error occurred during login. Please try again.");
+      }
+    
+      setErrors({
+        apiError: error.response?.data?.message || "An error occurred during login. Please try again"
+      });
+    }
+    
+    
+     finally {
       setIsLoading(false);
     }
+    
   };
 
   const isFormValid =

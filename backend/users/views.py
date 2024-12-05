@@ -23,9 +23,6 @@ class CreateUserView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
-        print(f"**********************************{request.data}************************************")
-
         email = request.data.get('email')
         existing_user = Users.objects.filter(email=email).first()
 
@@ -42,12 +39,11 @@ class CreateUserView(APIView):
                 return Response({'email': ['This email is already registered']}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UserSerializer(data=request.data)
-        print(f"Serializer: {serializer}**************************************************")
+        print(f"Serializer: {serializer}********************NEW USER******************************")
         print(f"is_valid :   {serializer.is_valid()}********************************")
         if serializer.is_valid():
-            
             user = serializer.save()  # User is inactive until email is verified
-            
+  
             # Send OTP email asynchronously
             send_email.delay(user.id)
 
@@ -64,12 +60,10 @@ class VerificationView(APIView):
 
     def post(self, request):
 
-        print(f"data : {request.data.get('email')}")
-        print(f"data : {request.data.get('otp')}****--------******------******")
+        
 
         serializer = VerificationSerializer(data=request.data)
-        print(f"OTP Serializer: {serializer}**************************************************")
-        print(f"OTP is_valid :   {serializer.is_valid()}********************************")
+        
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -85,8 +79,8 @@ class VerificationView(APIView):
                 return Response({"message": "User is already verified."}, status=status.HTTP_200_OK)
 
             if verification.is_expired():
-                print(verification.is_expired)
-                return Response({"error": "OTP has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+                print(verification.is_expired())
+                return Response({"error": "OTP has expired. Please request a new one."}, status=status.HTTP_410_GONE)
             
 
             # Verify OTP or token

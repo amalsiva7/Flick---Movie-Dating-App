@@ -57,23 +57,37 @@ axiosInstance.interceptors.request.use(
 
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => response, // Pass successful responses as-is
   (error) => {
-    if (error.response && error.response.status === 401) {
-      if (!error.config.url.includes("token/")) {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      // Handle Unauthorized (401) error
+      if (status === 401 && !error.config.url.includes("token/")) {
         localStorage.removeItem("token");
+        toast.error("Session expired. Redirecting to login...");
         window.location.href = "/login";
       }
+
+      // Handle Forbidden (403) error for blocked users
+      if (status === 403 && data.error === "User has been blocked by admin.") {
+        localStorage.removeItem("token"); 
+        toast.error("User has been blocked by admin."); 
+        window.location.href = "/login"; 
+      }
+
+      // Handle other errors and display the message from the server
+      if (data && data.error) {
+        toast.error(data.error); 
+      } else if (data && data.title) {
+        toast.error(data.title[0] || "An error occurred.");
+      }
     }
-    if (error.response.data) {
-      console.log("error.response.data", error.response.data);
-      const message = error.response.data.title
-        ? error.response.data.title[0]
-        : "An error occurred.";
-      toast.error(`Error: ${message}`);
-    }
+
+    // Always reject the promise for error responses
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;

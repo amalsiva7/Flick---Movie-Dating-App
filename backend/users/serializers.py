@@ -73,4 +73,4 @@ class LoginSerializer(serializers.Serializer):
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ["username","email","date_joined","last_login","is_email_verified","is_active"]
+        fields = ["id","username","email","date_joined","last_login","is_email_verified","is_active"]

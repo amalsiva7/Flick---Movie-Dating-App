@@ -20,7 +20,7 @@ const OTP = () => {
 
   // Handle OTP input changes
   const handleChange = (element, index) => {
-    if (isNaN(element.value)) return; // Prevent non-numeric input
+    if (isNaN(element.value) || element.value === " ") return;
 
     const newOtp = [...otp];
     newOtp[index] = element.value;
@@ -61,7 +61,7 @@ const OTP = () => {
       if (otpCode.length === 6) {
         handleSubmit(otpCode);
       }
-    }, 500); // Adjust debounce delay as needed (e.g., 500ms)
+    }, 500); //debounce delay
   };
 
   // Submit the OTP for verification
@@ -75,34 +75,50 @@ const OTP = () => {
     setError("");
 
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append("otp", otpCode);
       formData.append("email", email);
-    
+
       const response = await axiosInstance.post("users/verify/", formData);
-    
+
       if (response.status === 200) {
         const message = response.data.message || "OTP verification successful";
-        toast.success(message); // Success toast
+        toast.success(message);
         navigate("/login");
       }
     } catch (error) {
+      setLoading(false);
+
+      // Check if the error has a response
       if (error.response) {
-        const { status, data } = error.response;
-    
-        if (status === 400) {
-          toast.error(data.error || "Invalid OTP or token."); // Handle invalid OTP or expired OTP
-        } else if (status === 404) {
-          toast.error(data.error || "User or verification record not found."); // Handle missing user/verification record
-        } else {
-          toast.error("An unexpected error occurred. Please try again.");
-        }
+          const { status, data } = error.response;
+
+          // Log detailed error information for debugging
+          console.error("Error response status:", status);
+          console.error("Error response data:", data);
+
+          // Handle specific error statuses
+          if (status === 400) {
+              // Ensure that the error message is properly displayed from the response
+              const errorMessage = data.error || "Invalid OTP or token.";
+              toast.error(errorMessage);  // Display the error message
+          } else if (status === 404) {
+              toast.error(data.error || "User or verification record not found.");
+          } else if (status === 410) {
+              toast.error(data.error || "OTP has expired. Please request a new one.");
+          } else {
+              toast.error("An unexpected error occurred. Please try again.");
+          }
       } else {
-        toast.error("Network error. Please check your connection.");
+          // If no response, handle network errors
+          console.error("Error details:", error);
+          toast.error("Network error. Please check your connection.");
       }
-    } finally {
+  } finally {
       setLoading(false);
     }
+
     
   };
 

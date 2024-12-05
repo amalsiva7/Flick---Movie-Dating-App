@@ -28,6 +28,26 @@ const AdminUserList = () => {
     }
   };
 
+  const handleUserStatus = async(user_id)=>{
+    try{
+      const response = await axiosInstance.post(`user-admin/user-status/${user_id}/`)
+
+      if (response.status === 200){
+        const updatedUser = users.map((user) => user.id === user_id ? { ...user, is_active: response.data.is_active } : user);
+        
+        setUsers(updatedUser)
+        toast.success(response.data.message)
+      }else{
+        console.log(error,"****************Error in UserStatusUpdation")
+        toast.error(response.data.message)
+      }
+      
+
+    }catch(error){
+      toast.error(error.message)
+    }
+  };
+
   // Handle search input change
   const handleSearchInputChange = (e) => {
     setSearchQuery(e.target.value);
@@ -41,15 +61,6 @@ const AdminUserList = () => {
   const formatDate = (date) => format(new Date(date), 'dd MMM yyyy');
 
 
-
-//   const handleNextPage = () => {
-//     fetchuserData(nextPage);
-//   };
-
-
-//   const handlePrevPage = () => {
-//     fetchuserData(prevPage);
-//   };
 
 
 
@@ -74,7 +85,7 @@ const AdminUserList = () => {
 
         {/* User Table */}
         <table className="w-full text-sm text-gray-500">
-            <thead className="bg-white-200 text-gray-400 uppercase text-xs">
+            <thead className="bg-white-200 text-gray-800 uppercase text-xs">
                 <tr>
                 <th className="px-6 py-3">No</th>
                 <th className="px-6 py-3">Name</th>
@@ -96,16 +107,18 @@ const AdminUserList = () => {
                         </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                        <span
-                        className={`px-2 py-1 rounded-full text-sm font-bold ${
-                            user.is_active
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-600"
+                      <span
+                        onClick={() => handleUserStatus(user.id)}
+                        className={`cursor-pointer px-2 py-1 rounded-full text-sm font-bold ${
+                          user.is_active
+                            ? "bg-green-100 text-green-600 hover:bg-green-200"
+                            : "bg-red-100 text-red-600 hover:bg-red-200"
                         }`}
-                        >
+                      >
                         {user.is_active ? "Active" : "Inactive"}
-                        </span>
+                      </span>
                     </td>
+
                     <td className="px-6 py-4 text-center">{formatDate(user.date_joined)}</td>
                     <td className="px-6 py-4 text-center">{formatDate(user.last_login)}</td>
                     <td className="px-6 py-4 text-center">

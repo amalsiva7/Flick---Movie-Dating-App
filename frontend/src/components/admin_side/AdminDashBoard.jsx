@@ -15,6 +15,7 @@ export default function AdminDashboard() {
 
     const[totalUsers,setTotalUsers] = useState(0);
     const[activeUsers,setActiveUsers] = useState(0);
+    const[users,setUsers] = useState([])
 
 
     const fetchUserCount = async ()=> {
@@ -27,6 +28,7 @@ export default function AdminDashboard() {
             return 0;
         }
     };
+
 
 
     useEffect(()=>{

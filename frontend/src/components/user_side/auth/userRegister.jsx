@@ -178,7 +178,7 @@ const UserRegister = () => {
 
       if (response.status === 201) {
 
-        await toast.success("User Already Registered! Please check your email for verification.");
+        await toast.success("Hi..Please check your email for verification.");
         sessionStorage.setItem("email", formData.email);
 
         console.log(formData.email,"asdfasdfasdfasdfasdf")
