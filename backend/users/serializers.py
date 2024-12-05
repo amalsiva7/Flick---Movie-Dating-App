@@ -68,4 +68,9 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
-    
+
+##UserList
+class UserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        fields = ["username","email","date_joined","last_login","is_email_verified","is_active"]

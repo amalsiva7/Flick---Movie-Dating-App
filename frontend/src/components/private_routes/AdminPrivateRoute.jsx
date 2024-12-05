@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import isAuthUser from "../../utils/isAuth";
-import { Loader } from "lucide-react";
 import { Navigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import HeartLoader from '../loader/HeartLoader';
+
 
 const AdminPrivateRoute = ({children}) =>{
     const[isAuthenticated,setIsAuthenticated] = useState(false);
@@ -25,7 +25,7 @@ const AdminPrivateRoute = ({children}) =>{
     if(isLoading){
         return(
             <div>
-                <Loader/>
+                <HeartLoader />
             </div>
         );
     }

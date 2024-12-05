@@ -7,7 +7,7 @@ const updateUserToken = async () => {
     const refreshToken = localStorage.getItem("refresh");
   
     try {
-      const res = await axiosInstance.post('api/refresh/', {
+      const res = await axiosInstance.post('refresh/', {
         refresh: refreshToken,
       });
       if (res.status === 200) {
@@ -38,7 +38,9 @@ const updateUserToken = async () => {
 
 
 const isAuthUser = async () =>{
+  
     const accessToken = localStorage.getItem("access");
+    console.log(accessToken,"*********************************************************VALID ACCESS TOKEN")
 
     if(!accessToken){
         return {id:null, username:null, isAuthenticated:false,isAdmin:null};
@@ -57,6 +59,7 @@ const isAuthUser = async () =>{
         };
 
     }else{
+      console.log("indside updateUsertoken****************************")
         const UpdateSuccess = await updateUserToken();
         return UpdateSuccess;
     }
