@@ -14,6 +14,9 @@ from django.contrib.auth.hashers import make_password
 from .tasks import send_email
 from rest_framework.exceptions import ValidationError
 from django.utils.timezone import now
+from django.http import HttpResponseRedirect
+from .utils import *
+
 
 # Create your views here.
 
@@ -106,6 +109,37 @@ class VerificationView(APIView):
             return Response({"error": "No verification record found."}, status=status.HTTP_404_NOT_FOUND)
 
 
+class VerificationMagicLinkView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        token = request.query_params.get('token')
+        print(f"Received token: {token}")  # Logs the received token
+
+        if not token:
+            print("Token is missing.")
+            return Response({"error": "Token is missing."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            verification = Verification.objects.get(token=token)
+
+            if verification.is_verified:
+                print(f"Token {token} already verified.")
+                return HttpResponseRedirect('http://localhost:3000/login')
+
+            if verification.is_expired():
+                print(f"Token {token} has expired.")
+                return Response({"error": "Token has expired. Please request a new one."}, status=status.HTTP_410_GONE)
+
+            verification.is_verified = True
+            verification.user.is_email_verified = True
+            verification.user.save()
+            verification.save()
+            print(f"Token {token} verified successfully.")
+            return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+        except Verification.DoesNotExist:
+            print(f"Token {token} does not exist.")
+            return Response({"error": "Invalid or expired token."}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -162,4 +196,70 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+##Display UserProfile
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            profile = Profile.objects.get(user=request.user)
+            serializer = ProfileSerializer(profile)
+
+            profile_data = serializer.data
+            profile_data["last_updated_at"] = format_time_difference(profile.last_updated_at)
+
+            return Response(profile_data, status=200)
+        except Profile.DoesNotExist:
+            return Response({"error": "Profile not found."}, status=404)
+
+
+
+##Create UserProfile View
+class CreateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Check if the user already has a profile
+        if Profile.objects.filter(user=request.user).exists():
+            return Response({"message": "Profile already created!"}, status=status.HTTP_200_OK)
+
+        # If no profile exists, create a new one
+        serializer = ProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            profile = Profile.objects.get(user=request.user)
+
+            serializer.save(user=request.user)
+            last_updated_str = format_time_difference(profile.last_updated_at)
+            return Response({"message": "Profile created successfully!",
+                            "last_updated_at": last_updated_str}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+
+##Update UserProfile View
+class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        try:
+            # Retrieve the user's existing profile
+            profile = Profile.objects.get(user=request.user)
+        except Profile.DoesNotExist:
+            return Response({"message": "Profile not found!"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize the profile with the provided data
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            last_updated_str = format_time_difference(profile.last_updated_at)
+            return Response({"message": "Profile updated successfully!",
+                              "last_updated_at": last_updated_str}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+

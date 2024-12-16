@@ -11,6 +11,8 @@ import UserHomeHeader from '../user_side/userHomePage/userHomeHeader';
 import UserHome from '../user_side/userHomePage/userHome';
 import PrivateRoutes from '../private_routes/PrivateRoute';
 import { setAuthentication } from '../../Redux/Authentication/authenticationSlice';
+import MagicLink from '../user_side/auth/MagicLink';
+import UserProfile from '../user_side/userProfile/UserProfile';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -67,6 +69,10 @@ const UserWrapper = () => {
       element: <OTP/>
     },
     {
+      path: '/verify', 
+      element: <MagicLink/>
+    },
+    {
       path: "/login",
       element: (
         <LoginPrivateRoute>
@@ -79,6 +85,14 @@ const UserWrapper = () => {
       element: (
         <PrivateRoutes>
           <UserHome/>
+        </PrivateRoutes>
+      )
+    },
+    {
+      path: "/user-profile",
+      element: (
+        <PrivateRoutes>
+          <UserProfile/>
         </PrivateRoutes>
       )
     },

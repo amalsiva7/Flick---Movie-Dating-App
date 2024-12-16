@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth.hashers import make_password,check_password
 from django.contrib.auth import authenticate
+from datetime import datetime
 
 
 ##User 
@@ -74,3 +75,27 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
         fields = ["id","username","email","date_joined","last_login","is_email_verified","is_active"]
+
+
+#UserProfile
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile
+        fields = ['birth_date', 'gender', 'location', 'interests', 'gender_preferences']
+
+    def get_age(self, obj):
+        today = datetime.today()
+        return today.year - obj.birth_date.year - ((today.month, today.day) < (obj.birth_date.month, obj.birth_date.day))
+
+    def validate_birth_date(self, value):
+        today = datetime.today()
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        if age < 18:
+            raise serializers.ValidationError("Age must be above 18 to create a profile.")
+        return value
+    
+    def validate_interests(self, value):
+        if len(value) < 10:
+            raise serializers.ValidationError("A minimum of 10 interests is required.")
+        return value

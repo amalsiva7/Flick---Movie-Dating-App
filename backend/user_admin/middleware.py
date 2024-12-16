@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 
-
 class ActiveUserMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

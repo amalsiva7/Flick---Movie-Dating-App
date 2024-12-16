@@ -21,6 +21,10 @@ const UserHomeHeader = () => {
     window.location.reload();
     toast.loading("logging out")
   };
+  
+  const userProfile = () =>{
+    
+  }
 
   return (
     <div className="relative flex items-center justify-between px-6 py-4 bg-white shadow-sm">

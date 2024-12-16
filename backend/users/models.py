@@ -38,7 +38,7 @@ class MyAccountManager(BaseUserManager):
         return user
 
 
-
+##USER MODEL
 class Users(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=50)
     email = models.EmailField(max_length=100,unique=True)
@@ -56,6 +56,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
 
     objects = MyAccountManager()
 
+##VERIFICATION MODEL (otp,magiclink)
 class Verification(models.Model):
     user = models.OneToOneField('Users',on_delete=models.CASCADE,related_name='verification')
     token = models.CharField(max_length=100)
@@ -83,3 +84,21 @@ class Verification(models.Model):
             self.created_at = now()
             self.save()
         return self.otp
+
+
+##UserProfile model
+class Profile(models.Model):
+    user = models.OneToOneField('Users', on_delete=models.CASCADE, related_name="profile")
+    birth_date = models.DateField()
+    gender = models.CharField(max_length=10, choices=[("male", "Male"), ("female", "Female"), ("other", "Other")])
+    location = models.JSONField(default=dict)  # Store latitude and longitude as a JSON object
+    interests = models.JSONField(default=list)  # Store as a list of strings
+    gender_preferences = models.CharField(max_length=10, choices=[("male", "Male"), ("female", "Female"), ("bi", "Bi")])
+    last_updated_at = models.DateTimeField(auto_now=True)
+
+
+# ##UserImage Uploads
+# class UserImage(models.Model):
+#     user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name="images")
+#     image = models.ImageField(upload_to="user_images/")
+#     uploaded_at = models.DateTimeField(auto_now_add=True)
