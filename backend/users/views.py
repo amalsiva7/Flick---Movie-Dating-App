@@ -263,3 +263,64 @@ class UpdateProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class SetProfilePicView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Retrieve or create the UserImage instance for the user
+            user_image, created = UserImage.objects.get_or_create(user=request.user)
+
+            # Pass the request data to the serializer for validation
+            serializer = UserImageSerializer(user_image, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                # Save the updated UserImage instance with the new images
+                serializer.save()
+                return Response(
+                    {"message": "Images uploaded successfully!", "data": serializer.data},
+                    status=status.HTTP_201_CREATED,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get(self, request):
+        try:
+            # Retrieve the UserImage instance for the user
+            user_image = UserImage.objects.get(user=request.user)
+            serializer = UserImageSerializer(user_image)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except UserImage.DoesNotExist:
+            return Response({"error": "No images found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateProfilePicView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        try:
+            # Retrieve the UserImage instance for the authenticated user
+            user_image = UserImage.objects.get(user=request.user)
+
+            # Pass the request data to the serializer for partial update
+            serializer = UserImageSerializer(user_image, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                # Save the updated fields
+                serializer.save()
+                return Response(
+                    {"message": "Profile picture updated successfully!", "data": serializer.data},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except UserImage.DoesNotExist:
+            return Response(
+                {"error": "No profile images found for this user. Please upload first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

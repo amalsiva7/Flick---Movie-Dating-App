@@ -14,6 +14,6 @@ urlpatterns = [
     path('set-user-profile/',CreateProfileView.as_view(),name='set-user-profile'),
     path('update-user-profile/',UpdateProfileView.as_view(),name='update-user-profile'),
 
-    path('set-user-pic/',UpdateProfileView.as_view(),name='set-user-pic'),
-    path('update-user-pic/',UpdateProfileView.as_view(),name='update-user-pic'),
+    path('set-user-pic/',SetProfilePicView.as_view(),name='set-user-pic'),
+    path('update-user-pic/',UpdateProfilePicView.as_view(),name='update-user-pic'),
 ]

@@ -1,9 +1,9 @@
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { toast } from 'react-hot-toast';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 5000, // Adjust as needed
+  timeout: 5000,
 });
 
 axiosInstance.interceptors.request.use(
@@ -19,34 +19,46 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const navigate = useNavigate(); // Use inside a hook or wrap for global access
+  (error) => {
+    if (error.response) {
+      const { status, data } = error.response;
 
-    // Handle 401 errors for token expiration
-    if (error.response?.status === 401) {
-      const refreshToken = localStorage.getItem("refresh");
-      if (refreshToken) {
-        try {
-          const response = await axios.post("refresh/", {
-            refresh: refreshToken,
-          });
-          const { access } = response.data;
+      console.log("Session expired. Redirecting to login...");
 
-          localStorage.setItem("access", access);
-
-          // Retry the original request
-          error.config.headers.Authorization = `Bearer ${access}`;
-          return axiosInstance.request(error.config);
-        } catch (refreshError) {
-          localStorage.clear(); // Clear tokens on failure
-          navigate("/login");
-          return Promise.reject(refreshError);
-        }
-      } else {
+      // Handle Unauthorized (401) errors
+      if (status === 401) {
         localStorage.clear();
-        navigate("/login");
+        toast.error("Session expired. Redirecting to login...");
+        window.location.href = "/login";
+        return Promise.reject(error);
       }
+
+      // Handle Forbidden (403) errors for blocked users
+      if (status === 403 && data.error === "User has been blocked by admin.") {
+        localStorage.clear();
+        toast.error("User has been blocked by admin.");
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      // Handle other specific error messages
+      if (data) {
+        if (data.error) {
+          toast.error(data.error);
+        } else if (data.title) {
+          toast.error(data.title[0] || "An error occurred.");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
+      }
+    } else if (error.request) {
+      // Request was made but no response received
+      toast.error("No response received from the server.");
+    } else {
+      // Something happened in setting up the request
+      toast.error("Error setting up the request.");
     }
+
     return Promise.reject(error);
   }
 );

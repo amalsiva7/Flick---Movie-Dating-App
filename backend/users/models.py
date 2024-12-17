@@ -7,6 +7,7 @@ import random
 import string
 import uuid
 import hashlib
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -102,3 +103,17 @@ class Profile(models.Model):
 #     user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name="images")
 #     image = models.ImageField(upload_to="user_images/")
 #     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class UserImage(models.Model):
+    user = models.OneToOneField('Users', on_delete=models.CASCADE, related_name="images")
+    image1 = models.ImageField(upload_to="user_images/", null=True, blank=True)
+    image2 = models.ImageField(upload_to="user_images/", null=True, blank=True)
+    image3 = models.ImageField(upload_to="user_images/", null=True, blank=True)
+    image4 = models.ImageField(upload_to="user_images/", null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        """Custom validation to ensure that at least one image is uploaded."""
+        if not any([self.image1, self.image2, self.image3, self.image4]):
+            raise ValidationError("At least one profile picture must be uploaded.")

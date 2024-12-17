@@ -99,3 +99,19 @@ class ProfileSerializer(serializers.ModelSerializer):
         if len(value) < 10:
             raise serializers.ValidationError("A minimum of 10 interests is required.")
         return value
+
+class UserImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserImage
+        fields = ['image1', 'image2', 'image3', 'image4']
+
+    def validate(self, data):
+        """Ensure no more than 4 images are uploaded and all are valid."""
+        images = [data.get('image1'), data.get('image2'), data.get('image3'), data.get('image4')]
+        uploaded_images = [image for image in images if image]
+
+        if len(uploaded_images) > 4:
+            raise serializers.ValidationError("You can only upload up to 4 images.")
+
+        return data
+    
