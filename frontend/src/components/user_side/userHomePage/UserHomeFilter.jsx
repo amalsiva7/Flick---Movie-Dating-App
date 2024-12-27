@@ -9,16 +9,16 @@ export default function Filters() {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm text-gray-600">age:</label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 ">
               <input
                 type="number"
-                className="w-20 px-3 py-1 rounded border"
+                className="w-20 px-3 py-1 rounded-lg border"
                 placeholder="Min"
               />
               <span>-</span>
               <input
                 type="number"
-                className="w-20 px-3 py-1 rounded border"
+                className="w-20 px-3 py-1  rounded-lg border"
                 placeholder="Max"
               />
             </div>
@@ -29,13 +29,13 @@ export default function Filters() {
             <div className="flex items-center space-x-2">
               <input
                 type="number"
-                className="w-20 px-3 py-1 rounded border"
+                className="w-20 px-3 py-1  rounded-lg border"
                 placeholder="Min"
               />
               <span>-</span>
               <input
                 type="number"
-                className="w-20 px-3 py-1 rounded border"
+                className="w-20 px-3 py-1  rounded-lg border"
                 placeholder="Max"
               />
             </div>
@@ -45,7 +45,7 @@ export default function Filters() {
             <label className="text-sm text-gray-600">location:</label>
             <input
               type="text"
-              className="w-full px-3 py-1 rounded border"
+              className="w-full px-3 py-1  rounded-lg border"
               placeholder="Enter location"
             />
           </div>

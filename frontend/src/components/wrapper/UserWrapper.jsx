@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useRoutes } from 'react-router-dom';
+import { Outlet, useNavigate, useRoutes } from 'react-router-dom';
 import HomePage from '../../pages/homePage';
 import UserRegister from '../user_side/auth/userRegister';
 import OTP from '../user_side/auth/OTP';
@@ -13,6 +13,7 @@ import PrivateRoutes from '../private_routes/PrivateRoute';
 import { setAuthentication } from '../../Redux/Authentication/authenticationSlice';
 import MagicLink from '../user_side/auth/MagicLink';
 import UserProfile from '../user_side/userProfile/UserProfile';
+import UserCard from '../user_side/userhomepage/UserCard';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -32,26 +33,17 @@ const UserWrapper = () => {
   };
 
 
-  useEffect(() => {
-    if (!authentication_user?.isAuthenticated) {
-      checkAuth();
-    } else if (authentication_user.isAuthenticated) {
-      if (authentication_user.isAdmin) {
-        navigate('/admin'); // Adjust this path as needed
-      } else {
-        navigate('/userHome');
-      }
-    }
-  }, [authentication_user, dispatch, navigate]);
-
-
-
-  useEffect(()=>{
-    if(!authentication_user){
-        checkAuth();
-    }
-  },[authentication_user]);
-
+  // useEffect(() => {
+  //   if (!authentication_user?.isAuthenticated) {
+  //     checkAuth();
+  //   } else if (authentication_user.isAuthenticated) {
+  //     if (authentication_user.isAdmin) {
+  //       navigate('/admin'); // Adjust this path as needed
+  //     } else {
+  //       navigate('/userHome');
+  //     }
+  //   }
+  // }, [authentication_user, dispatch, navigate]);
 
 
   const routes = useRoutes([
@@ -81,21 +73,64 @@ const UserWrapper = () => {
       )
     },
     {
-      path: "/userHome",
+      path: "/user",
       element: (
         <PrivateRoutes>
-          <UserHome/>
+          <UserHome />
         </PrivateRoutes>
-      )
-    },
-    {
-      path: "/user-profile",
-      element: (
-        <PrivateRoutes>
-          <UserProfile/>
-        </PrivateRoutes>
-      )
-    },
+      ),
+      children: [
+        {
+          path: "home",
+          element: (
+            <PrivateRoutes>
+              <UserCard />
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "profile",
+          element: (
+            <PrivateRoutes>
+              <UserProfile />
+            </PrivateRoutes>
+          )
+        },
+        
+        {
+          path: "subscription",
+          element: (
+            <PrivateRoutes>
+              {/* Add your Subscription component */}
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "settings",
+          element: (
+            <PrivateRoutes>
+              {/* Add your Settings component */}
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "contact",
+          element: (
+            <PrivateRoutes>
+              {/* Add your Contact component */}
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "about",
+          element: (
+            <PrivateRoutes>
+              {/* Add your About component */}
+            </PrivateRoutes>
+          )
+        }
+      ]
+    }
   ]);
 
   return routes;

@@ -157,6 +157,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIALS = True
 
+
 AUTH_USER_MODEL = "users.Users"
 
 
@@ -195,3 +196,19 @@ EMAIL_HOST_PASSWORD = 'rupo klgi mvod pqgz'
 
 
 FRONTEND_BASE_URL = "http://localhost:3000"  
+
+
+# MEDIA CONFIGURATION
+MEDIA_URL = '/media/'  # URL to access media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Path to store uploaded files
+
+
+# Add these settings to limit file sizes
+# MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB (Adjust as needed)
+# FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE
+
+
+# FILE_UPLOAD_HANDLERS = [
+#     'django.core.files.uploadhandler.MemoryFileUploadHandler',
+#     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+# ]

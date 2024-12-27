@@ -96,9 +96,14 @@ class ProfileSerializer(serializers.ModelSerializer):
         return value
     
     def validate_interests(self, value):
+        if isinstance(value, str):
+            value = [interest.strip() for interest in value.split(",")]
+
         if len(value) < 10:
             raise serializers.ValidationError("A minimum of 10 interests is required.")
         return value
+
+
 
 class UserImageSerializer(serializers.ModelSerializer):
     class Meta:

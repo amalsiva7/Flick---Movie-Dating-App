@@ -16,6 +16,8 @@ from rest_framework.exceptions import ValidationError
 from django.utils.timezone import now
 from django.http import HttpResponseRedirect
 from .utils import *
+from rest_framework.parsers import MultiPartParser,FormParser
+
 
 
 # Create your views here.
@@ -265,18 +267,44 @@ class UpdateProfileView(APIView):
 
 class SetProfilePicView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser,FormParser]
 
-    def post(self, request):
+    def post(self, request,):
         try:
-            # Retrieve or create the UserImage instance for the user
-            user_image, created = UserImage.objects.get_or_create(user=request.user)
+            print("",request.data)
+            print("==== DETAILED REQUEST DEBUG ====")
+            print("Request META:", {
+                'CONTENT_TYPE': request.META.get('CONTENT_TYPE'),
+                'HTTP_CONTENT_TYPE': request.META.get('HTTP_CONTENT_TYPE'),
+            })
+            print("Files received:", request.FILES)
+            print("Headers:", dict(request.headers))
+            print("==============================")
 
-            # Pass the request data to the serializer for validation
-            serializer = UserImageSerializer(user_image, data=request.data, partial=True)
+            #Check for files explicitly
+            if not request.FILES:
+                return Response({
+                    "error": "No files uploaded",
+                    "debug_info": {
+                        "content_type": request.content_type,
+                        "files_received": bool(request.FILES),
+                        "headers": dict(request.headers),
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+
+
+            user_id = request.data.get("user_id")
+
+            user = Users.objects.get(id=user_id)
+
+            #Pass the request data to the serializer for validation
+            serializer = UserImageSerializer(user, data=request.data, partial=True)
 
             if serializer.is_valid():
                 # Save the updated UserImage instance with the new images
                 serializer.save()
+                
                 return Response(
                     {"message": "Images uploaded successfully!", "data": serializer.data},
                     status=status.HTTP_201_CREATED,
@@ -310,6 +338,7 @@ class UpdateProfilePicView(APIView):
             if serializer.is_valid():
                 # Save the updated fields
                 serializer.save()
+                user_image.full_clean()
                 return Response(
                     {"message": "Profile picture updated successfully!", "data": serializer.data},
                     status=status.HTTP_200_OK,

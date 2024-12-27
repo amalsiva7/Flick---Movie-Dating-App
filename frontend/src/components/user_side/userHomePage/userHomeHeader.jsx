@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Heart, MessageCircle, User, Zap } from 'lucide-react';
 import { FaHamburger } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const UserHomeHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const navigate = useNavigate()
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -22,9 +24,10 @@ const UserHomeHeader = () => {
     toast.loading("logging out")
   };
   
-  const userProfile = () =>{
-    
-  }
+ 
+  const navigateToProfile = () => {
+    navigate('/user-profile');
+  };
 
   return (
     <div className="relative flex items-center justify-between px-6 py-4 bg-white shadow-sm">
@@ -52,12 +55,17 @@ const UserHomeHeader = () => {
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-40">
               <button
-                onClick={handleLogout}
+              onClick={handleLogout}   
                 className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
               >
                 Logout
               </button>
+              <button className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+              onClick={navigateToProfile}>
+                Profile
+              </button>
             </div>
+            
           )}
         </div>
       </div>
