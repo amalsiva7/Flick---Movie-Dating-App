@@ -204,19 +204,22 @@ class LoginView(APIView):
 
 ##Display UserProfile
 class ProfileView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    print("Call to ProfileView")
+    permission_classes = [IsAuthenticated]  
 
     def get(self, request):
 
-        if not request.user.is_profile_updated:
-            return Response({"error": "Profile not completed"}, status=status.HTTP_403_FORBIDDEN)
+        print("Call to ProfileView")
 
+        if not request.user.is_profile_updated:
+                return Response({
+                    "error": "Profile not completed",
+                    "username": request.user.username,
+                    "email": request.user.email,
+                    "is_profile_updated": False
+                }, status=status.HTTP_403_FORBIDDEN)
         try:
             profile = Profile.objects.get(user=request.user)
             serializer = ProfileSerializer(profile)
-
             profile_data = serializer.data
             profile_data["last_updated_at"] = format_time_difference(profile.last_updated_at)
 
@@ -229,8 +232,6 @@ class ProfileView(APIView):
 ##Create UserProfile View
 class CreateProfileView(APIView):
     permission_classes = [IsAuthenticated]
-
-    print("Call to CreateProfileView")
 
     def post(self, request):
         
@@ -264,10 +265,10 @@ class CreateProfileView(APIView):
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    print("Call to UpdateProfileView")
 
     def patch(self, request):
         try:
+            print("Call to UpdateProfileView")
             # Retrieve the user's existing profile
             profile = Profile.objects.get(user=request.user)
         except Profile.DoesNotExist:

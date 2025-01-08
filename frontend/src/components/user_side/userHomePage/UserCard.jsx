@@ -46,7 +46,7 @@ const UserCard = () => {
   }
 
   return (
-    <div className="relative bg-white shadow-md rounded-lg border p-4 h-full w-3/4 left-32">
+    <div className="relative bg-white shadow-md rounded-lg border p-4 h-full w-3/4 left-32 flex justify-center items-center">
       {!hasProfile ? (
         <div className="flex flex-col items-center justify-center space-y-4 h-64">
           <h1 className="text-2xl font-semibold text-gray-800">Welcome to Your Dating Journey!</h1>

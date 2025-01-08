@@ -120,3 +120,9 @@ class ProfileRecommendationView(APIView):
         recommendations.sort(key=lambda x: (-x['common_interests'], x['distance_km']))
 
         return Response(recommendations, status=200)
+
+
+
+
+
+

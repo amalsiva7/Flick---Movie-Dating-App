@@ -96,7 +96,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         today = datetime.today()
         age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
         if age < 18:
-            raise serializers.ValidationError("Age must be above 18 to create a profile.")
+            raise serializers.ValidationError("Must be 18+ to create a profile.")
         return value
     
     def validate_interests(self, value):

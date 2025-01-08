@@ -36,6 +36,7 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [changes, setChanges] = useState({});
+  const [isProfileComplete, setIsProfileComplete] = useState(true);
 
   useEffect(() => {
     fetchUserProfile();
@@ -69,44 +70,55 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
   const fetchUserProfile = async () => {
     try {
       const response = await axiosInstance.get('users/user-profile/');
-      const { username, email, ...profileData } = response.data;
-      
+      const { username, email, is_profile_updated, ...profileData } = response.data;
+  
       const formattedData = {
-        name:username,
+        name: username,
         email,
         ...profileData,
-        birth_date: new Date(profileData.birth_date),
+        birth_date: profileData.birth_date ? new Date(profileData.birth_date) : new Date(),
       };
       
       setFormData(formattedData);
       setOriginalData(formattedData);
-      setLastUpdated(response.data.last_updated_at);
+      if (response.data.last_updated_at) {
+        setLastUpdated(response.data.last_updated_at);
+      }
       setLoading(false);
     } catch (error) {
-      if (error.response?.status === 404) {
-        // Profile doesn't exist yet, just load user data
-
-        try {
-          // const userResponse = await axiosInstance.get('users/me/');
-          const userData = {
-            name: userResponse.data.username,
-            email: userResponse.data.email,
-            birth_date: new Date(),
-            gender: '',
-            gender_preferences: '',
-            interests: [],
-            location: {
-              latitude: 0,
-              longitude: 0,
-              address: '',
-            },
-          };
-          setFormData(userData);
-          setOriginalData(userData);
-        } catch (userError) {
-          setError('Failed to load user data');
-        }
-      } else {
+      if (error.response?.status === 403) {
+        // Log the error response to see what we're getting
+        console.log("403 error response data:", error.response.data);
+        
+        // Properly destructure the error response data
+        const { username, email, is_profile_updated} = error.response.data;
+        
+        // Set the form data with the received username and email
+        const userData = {
+          name: username,  // Make sure to use 'name' since that's what your formData expects
+          email,
+          birth_date: new Date(),
+          gender: '',
+          gender_preferences: '',
+          interests: [],
+          location: {
+            latitude: 0,
+            longitude: 0,
+            address: '',
+          },
+        };
+        
+        setFormData(userData);
+        setOriginalData(userData);
+        setIsProfileComplete(false);
+        setIsEditing(true);
+        setError('Please complete your profile');
+        setLoading(false);
+      } else if (error.response?.status === 404) {
+        setError('Profile not found');
+      }
+      // else if(error.response?.status === 400 && ){} 
+      else {
         setError('Failed to load profile');
       }
       setLoading(false);
@@ -246,6 +258,9 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
             selected={formData.birth_date}
             onChange={(date) => handleFieldChange('birth_date', date || new Date())}
             dateFormat="dd/MM/yyyy"
+            showYearDropdown
+            yearDropdownItemNumber={100} // Show 100 years in the dropdown
+            scrollableYearDropdown // Enable scrolling in the dropdown
             disabled={!isEditing}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 focus:border-blue-500 focus:ring-blue-500 px-4 py-2 leading-tight"
           />

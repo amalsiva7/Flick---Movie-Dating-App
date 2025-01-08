@@ -10,10 +10,10 @@ const UserProfile =()=> {
   const [isEditing, setIsEditing] = useState(false);
 
 useEffect(()=>{
- console.log('ebtered ti user profile')
+ console.log('entered to user profile')
 
  return (
-  console.log('user rofile unmounted')
+  console.log('user profile unmounted')
  )
 },[])
   return (
