@@ -12,6 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
+    "@material-tailwind/react": "^2.1.10",
     "@mui/icons-material": "^6.1.10",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",

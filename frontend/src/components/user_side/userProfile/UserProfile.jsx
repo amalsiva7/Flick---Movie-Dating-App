@@ -17,18 +17,16 @@ useEffect(()=>{
  )
 },[])
   return (
-    <div className="h-screen bg-white relative shadow-lg rounded-lg border">
-      <div className="w-1/4 p-5">
+    <div className="h-auto bg-white relative shadow-lg rounded-lg border">
+      <div className="flex justify-between items-center">
         <ProfileHeader />
-      </div>
-      <div className='mt-5 flex justify-end'>
-          <TabButtons 
+        <TabButtons 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           setIsEditing={setIsEditing}
           />
-        </div>
-      <div className='mb'>
+      </div>
+      <div>
         {activeTab ==="profile" ? (<ProfileForm isEditing={isEditing} setIsEditing={setIsEditing}/>):'false'}
       </div>
         

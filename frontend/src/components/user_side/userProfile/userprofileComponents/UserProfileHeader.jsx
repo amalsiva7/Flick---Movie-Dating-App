@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function ProfileHeader() {
   return (
-    <div className="flex flex-col items-start">
+    <div className="flex flex-col items-start m-5">
       <div className="w-12 h-12 rounded-full overflow-hidden mb-4">
         <img
           src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&h=128"

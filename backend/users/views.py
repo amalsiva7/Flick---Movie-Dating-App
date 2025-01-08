@@ -206,7 +206,13 @@ class LoginView(APIView):
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    print("Call to ProfileView")
+
     def get(self, request):
+
+        if not request.user.is_profile_updated:
+            return Response({"error": "Profile not completed"}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             profile = Profile.objects.get(user=request.user)
             serializer = ProfileSerializer(profile)
@@ -224,7 +230,10 @@ class ProfileView(APIView):
 class CreateProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    print("Call to CreateProfileView")
+
     def post(self, request):
+        
         # Check if the user already has a profile
         if Profile.objects.filter(user=request.user).exists():
             return Response({"message": "Profile already created!"}, status=status.HTTP_200_OK)
@@ -232,12 +241,20 @@ class CreateProfileView(APIView):
         # If no profile exists, create a new one
         serializer = ProfileSerializer(data=request.data)
         if serializer.is_valid():
-            profile = Profile.objects.get(user=request.user)
 
             serializer.save(user=request.user)
+
+
+            request.user.is_profile_updated = True
+            request.user.save()
+
+            profile = Profile.objects.get(user=request.user)
+
+
             last_updated_str = format_time_difference(profile.last_updated_at)
             return Response({"message": "Profile created successfully!",
-                            "last_updated_at": last_updated_str}, status=status.HTTP_201_CREATED)
+                            "last_updated_at": last_updated_str,
+                            "is_profile_updated": True}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -246,6 +263,8 @@ class CreateProfileView(APIView):
 ##Update UserProfile View
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
+
+    print("Call to UpdateProfileView")
 
     def patch(self, request):
         try:

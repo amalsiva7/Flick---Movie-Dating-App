@@ -85,7 +85,7 @@ const Login = () => {
         if(decodedToken.isAdmin){
             navigate("/admin");
         }else{
-            navigate("/user");
+            navigate("/user/home");
         }
 
         toast.success("Login Success");

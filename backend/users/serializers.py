@@ -80,9 +80,13 @@ class UserListSerializer(serializers.ModelSerializer):
 #UserProfile
 class ProfileSerializer(serializers.ModelSerializer):
 
+    email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    is_profile_updated = serializers.BooleanField(source='user.is_profile_updated', read_only=True)
+
     class Meta:
         model = Profile
-        fields = ['birth_date', 'gender', 'location', 'interests', 'gender_preferences']
+        fields = ['username','email','birth_date', 'gender', 'location', 'interests', 'gender_preferences','is_profile_updated']
 
     def get_age(self, obj):
         today = datetime.today()

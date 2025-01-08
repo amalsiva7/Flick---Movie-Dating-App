@@ -3,7 +3,7 @@ import { Pencil, Image } from 'lucide-react';
 
 export default function TabButtons({ activeTab, setActiveTab, setIsEditing }) {
   return (
-    <div className="flex gap-4 w-full max-w-md mx-auto">
+    <div className="flex gap-4 w-full max-w-md mx-5">
       <button
         onClick={() => {
           setActiveTab('profile');

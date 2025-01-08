@@ -49,6 +49,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
+    is_profile_updated = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
 
