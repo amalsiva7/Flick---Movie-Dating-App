@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Image Upload</title>
+</head>
+<body>
+    <h2>Test Image Upload</h2>
+    <form action="/api/users/set-user-pic/" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="image1" accept="image/*" required>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>

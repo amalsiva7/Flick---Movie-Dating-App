@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileForm from "../userProfile/userprofileComponents/ProfileForm";
 import axiosInstance from "../../../utils/axiosConfig";
+import HeartLoader from "../../loader/HeartLoader";
 
 
 const UserCard = () => {
@@ -21,7 +22,7 @@ const UserCard = () => {
       const response = await axiosInstance.get('users/user-profile/');
       setHasProfile(true);
       setIsProfileUpdated(response.data.is_profile_updated);
-      setLoading(false);
+      setTimeout(() => setLoading(false), 500);
     } catch (error) {
       if (error.response?.status === 404) {
         setHasProfile(false);
@@ -29,7 +30,7 @@ const UserCard = () => {
         setHasProfile(true);
         setIsProfileUpdated(false);
       }
-      setLoading(false);
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
@@ -40,7 +41,7 @@ const UserCard = () => {
   if (loading) {
     return (
       <div className="relative bg-white shadow-md rounded-lg border p-4 h-full w-3/4 left-32 flex justify-center items-center">
-        <p>Loading...</p>
+        <HeartLoader/>
       </div>
     );
   }
@@ -76,15 +77,10 @@ const UserCard = () => {
       ) : (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-800">Your Profile</h1>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-100 text-blue-600 hover:bg-blue-200"
-            >
-              Edit
-            </button>
+
+            <h1 className="text-2xl font-semibold text-gray-800">Welcome User</h1>
+            
           </div>
-          <ProfileForm isEditing={isEditing} setIsEditing={setIsEditing} />
         </div>
       )}
     </div>

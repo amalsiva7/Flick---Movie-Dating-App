@@ -5,6 +5,7 @@ import { INTERESTS } from './ProfileInterests';
 import axiosInstance from '../../../../utils/axiosConfig';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
+import HeartLoader from '../../../loader/HeartLoader';
 
 
 export default function ProfileForm({ isEditing, setIsEditing }) {
@@ -113,7 +114,7 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
         setIsProfileComplete(false);
         setIsEditing(true);
         setError('Please complete your profile');
-        setLoading(false);
+        setTimeout(() => setLoading(false), 1000);
       } else if (error.response?.status === 404) {
         setError('Profile not found');
       }
@@ -121,7 +122,7 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
       else {
         setError('Failed to load profile');
       }
-      setLoading(false);
+      setTimeout(() => setLoading(false), 1000);
     }
   };
 
@@ -182,7 +183,7 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
           const newLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            address: formData.location.address // Maintain existing address
+            // address: formData.location.address // Maintain existing address
           };
           handleFieldChange('location', newLocation);
         },
@@ -195,9 +196,6 @@ export default function ProfileForm({ isEditing, setIsEditing }) {
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
-  }
 
   return (
     <form onSubmit={handleSubmit} className="m-10">

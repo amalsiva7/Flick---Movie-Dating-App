@@ -121,6 +121,12 @@ class UserImageSerializer(serializers.ModelSerializer):
 
         if len(uploaded_images) > 4:
             raise serializers.ValidationError("You can only upload up to 4 images.")
-
         return data
+    
+    def update(self, instance, validated_data):
+        # Update only the fields that were sent in the request
+        for field_name, value in validated_data.items():
+            setattr(instance, field_name, value)
+        instance.save()
+        return instance
     

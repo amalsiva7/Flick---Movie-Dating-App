@@ -291,15 +291,9 @@ class SetProfilePicView(APIView):
 
     def post(self, request,):
         try:
-            print("",request.data)
-            print("==== DETAILED REQUEST DEBUG ====")
-            print("Request META:", {
-                'CONTENT_TYPE': request.META.get('CONTENT_TYPE'),
-                'HTTP_CONTENT_TYPE': request.META.get('HTTP_CONTENT_TYPE'),
-            })
-            print("Files received:", request.FILES)
-            print("Headers:", dict(request.headers))
-            print("==============================")
+            print(request.data)
+            # print("Request Files:", request.FILES)
+            # print("Request Headers:", request.headers)
 
             #Check for files explicitly
             if not request.FILES:
@@ -314,12 +308,12 @@ class SetProfilePicView(APIView):
             
 
 
-            user_id = request.data.get("user_id")
+            user = request.user
 
-            user = Users.objects.get(id=user_id)
+            user_image, created = UserImage.objects.get_or_create(user=user)
 
             #Pass the request data to the serializer for validation
-            serializer = UserImageSerializer(user, data=request.data, partial=True)
+            serializer = UserImageSerializer(user_image, data=request.data, partial=True)
 
             if serializer.is_valid():
                 # Save the updated UserImage instance with the new images

@@ -37,6 +37,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
 }
 
 
@@ -81,7 +86,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -203,12 +208,14 @@ MEDIA_URL = '/media/'  # URL to access media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Path to store uploaded files
 
 
+
 # Add these settings to limit file sizes
 # MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB (Adjust as needed)
 # FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
 
-# FILE_UPLOAD_HANDLERS = [
-#     'django.core.files.uploadhandler.MemoryFileUploadHandler',
-#     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
-# ]
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
