@@ -17,6 +17,8 @@ from django.utils.timezone import now
 from django.http import HttpResponseRedirect
 from .utils import *
 from rest_framework.parsers import MultiPartParser,FormParser
+from django.db.models import Q
+from datetime import datetime
 
 
 
@@ -284,6 +286,7 @@ class UpdateProfileView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    
 
 class SetProfilePicView(APIView):
     permission_classes = [IsAuthenticated]
@@ -291,20 +294,22 @@ class SetProfilePicView(APIView):
 
     def post(self, request,):
         try:
-            print(request.data)
-            # print("Request Files:", request.FILES)
-            # print("Request Headers:", request.headers)
+            print("Request Data:", request.data)
+            print("Request Files:", request.FILES)  # Debug file data
+            print("Request Headers:", request.headers)
 
-            #Check for files explicitly
             if not request.FILES:
-                return Response({
-                    "error": "No files uploaded",
-                    "debug_info": {
-                        "content_type": request.content_type,
-                        "files_received": bool(request.FILES),
-                        "headers": dict(request.headers),
-                    }
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        "error": "No files uploaded",
+                        "debug_info": {
+                            "content_type": request.content_type,
+                            "files_received": bool(request.FILES),
+                            "headers": dict(request.headers),
+                        },
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             
 
 
@@ -318,6 +323,10 @@ class SetProfilePicView(APIView):
             if serializer.is_valid():
                 # Save the updated UserImage instance with the new images
                 serializer.save()
+
+                print("Uploaded files:", request.FILES)
+                print("UserImage instance data:", serializer.validated_data)
+
                 
                 return Response(
                     {"message": "Images uploaded successfully!", "data": serializer.data},
@@ -366,4 +375,74 @@ class UpdateProfilePicView(APIView):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
+    def delete(self, request, *args, **kwargs):
+        try:
+            # Retrieve UserImage instance
+            user_image = UserImage.objects.get(user=request.user)
+
+            # Get the image field to delete
+            image_field = request.data.get("image_field")
+            if not image_field or not hasattr(user_image, image_field):
+                return Response(
+                    {"error": "Invalid image field specified."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the image file and delete it if it exists
+            image_file = getattr(user_image, image_field)
+            if image_file:
+                # Delete the file from storage
+                image_file.delete(save=False)
+                # Remove reference from the database
+                setattr(user_image, image_field, None)
+                user_image.save()
+
+                return Response(
+                    {"message": f"{image_field} removed successfully."},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"error": f"{image_field} does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        except UserImage.DoesNotExist:
+            return Response(
+                {"error": "No profile images found for this user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class DatingCardView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            current_user = request.user
+            
+            user_profile = current_user.profile
+            preferred_gender = user_profile.gender_preferences
+            
+            if preferred_gender == 'bi':
+                gender_filter = Q()  
+            else:
+                gender_filter = Q(profile__gender=preferred_gender)
+            
+            users = Users.objects.filter(
+                is_active=True,
+                is_email_verified=True,
+                is_profile_updated=True,
+                profile__isnull=False,
+                images__isnull=False).filter(gender_filter).exclude(id=current_user.id).select_related('profile','images')
+            
+            serializer = DatingCardSerializer(users, many=True)
+            return Response({'status': 'success','data': serializer.data })
+            
+        except Exception as e:
+            return Response({'status': 'error','message': str(e)}, status=500)

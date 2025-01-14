@@ -3,6 +3,7 @@ import ProfileHeader from './userprofileComponents/UserProfileHeader';
 import TabButtons from './userprofileComponents/TabButtons';
 import ProfileForm from './userprofileComponents/ProfileForm';
 import HeartLoader from '../../loader/HeartLoader';
+import UserProfilePic from './userprofileComponents/UserProfilePic';
 
 
 const UserProfile =()=> {
@@ -42,7 +43,7 @@ const UserProfile =()=> {
           />
       </div>
       <div>
-        {activeTab ==="profile" ? (<ProfileForm isEditing={isEditing} setIsEditing={setIsEditing}/>):'false'}
+        {activeTab ==="profile" ? (<ProfileForm isEditing={isEditing} setIsEditing={setIsEditing}/>):(<UserProfilePic/>)}
       </div>
         
           

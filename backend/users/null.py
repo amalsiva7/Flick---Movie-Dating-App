@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
+from .models import *
 
 # Models
 class Profile(models.Model):
@@ -126,3 +127,39 @@ class ProfileRecommendationView(APIView):
 
 
 
+##Dating card serial;izer:
+
+class DatingCardSerializer(serializers.ModelSerializer):
+    age = serializers.SerializerMethodField()
+    interests = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Users
+        fields = ['id', 'username', 'age', 'interests', 'images']
+        
+    def get_age(self, obj):
+        if hasattr(obj, 'profile') and obj.profile.birth_date:
+            today = datetime.today()
+            birth_date = obj.profile.birth_date
+            return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        return None
+    
+    def get_interests(self, obj):
+        if hasattr(obj, 'profile'):
+            return obj.profile.interests
+        return []
+    
+    def get_images(self, obj):
+        if hasattr(obj, 'images'):
+            images = []
+            if obj.images.image1:
+                images.append(obj.images.image1.url)
+            if obj.images.image2:
+                images.append(obj.images.image2.url)
+            if obj.images.image3:
+                images.append(obj.images.image3.url)
+            if obj.images.image4:
+                images.append(obj.images.image4.url)
+            return images
+        return []

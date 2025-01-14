@@ -130,3 +130,8 @@ class UserImageSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+
+class DatingCardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = []

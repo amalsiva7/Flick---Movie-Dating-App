@@ -86,7 +86,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -205,7 +205,7 @@ FRONTEND_BASE_URL = "http://localhost:3000"
 
 # MEDIA CONFIGURATION
 MEDIA_URL = '/media/'  # URL to access media files
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Path to store uploaded files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')  # Path to store uploaded files
 
 
 
