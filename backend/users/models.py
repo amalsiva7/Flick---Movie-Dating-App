@@ -99,13 +99,6 @@ class Profile(models.Model):
     last_updated_at = models.DateTimeField(auto_now=True)
 
 
-# ##UserImage Uploads
-# class UserImage(models.Model):
-#     user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name="images")
-#     image = models.ImageField(upload_to="user_images/")
-#     uploaded_at = models.DateTimeField(auto_now_add=True)
-
-
 class UserImage(models.Model):
     user = models.OneToOneField('Users', on_delete=models.CASCADE, related_name="images")
     image1 = models.ImageField(upload_to="user_images/", null=True, blank=True)
@@ -118,3 +111,16 @@ class UserImage(models.Model):
         """Custom validation to ensure that at least one image is uploaded."""
         if not any([self.image1, self.image2, self.image3, self.image4]):
             raise ValidationError("At least one profile picture must be uploaded.")
+        
+
+class ActionHistory(models.Model):
+    user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='actions')
+    target_user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='received_flicks')
+    action = models.CharField(max_length=20, choices=[('reject', 'Reject'), ('flick_message', 'Flick_Message')])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Match(models.Model):
+    user1 = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='matches_as_user1')
+    user2 = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='matches_as_user2')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)

@@ -17,5 +17,6 @@ urlpatterns = [
     path('set-user-pic/',SetProfilePicView.as_view(),name='set-user-pic'),
     path('update-user-pic/',UpdateProfilePicView.as_view(),name='update-user-pic'),
 
-    path('dating-card/',DatingCardView.as_view(),name="cards"),
+    path('potential-matches/',PotentialMatchesView.as_view(),name="potential-matches"),
+    path('card-action/',ActionView.as_view(),name="card-action"),
 ]

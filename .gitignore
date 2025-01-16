@@ -25,7 +25,7 @@ env/
 ###############
 db.sqlite3  # SQLite database (if used for development)
 *.sqlite3
-media/  # User-uploaded files (if applicable)
+media/  # User-uploaded files
 staticfiles/  # Django's collected static files
 config/settings/local.py  # Local settings for Django (if used)
 config/settings/.local/  # Local settings directory (if used)

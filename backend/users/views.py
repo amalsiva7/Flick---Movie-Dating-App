@@ -225,6 +225,7 @@ class ProfileView(APIView):
             profile_data = serializer.data
             profile_data["last_updated_at"] = format_time_difference(profile.last_updated_at)
 
+
             return Response(profile_data, status=200)
         except Profile.DoesNotExist:
             return Response({"error": "Profile not found."}, status=404)
@@ -417,32 +418,119 @@ class UpdateProfilePicView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        
 
-
-class DatingCardView(APIView):
+class PotentialMatchesView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
-        try:
-            current_user = request.user
+        # Get the current user
+        current_user = request.user
+        current_profile = current_user.profile
+
+        user_gender = current_profile.gender
+        user_preference = current_profile.gender_preferences
+        
+        # Get already seen profiles
+        seen_profiles = ActionHistory.objects.filter(
+            user=current_user
+        ).values_list('target_user_id', flat=True)
+        
+        # Base query
+        base_filters = Q(
+            is_active=True,
+            is_email_verified=True,
+            is_profile_updated=True,
+            profile__isnull=False,
+            images__isnull=False
+        )
+        
+        # Filter by gender preference
+        if user_preference == 'bi':
+            # For bi users, show:
+            # 1. Users who are interested in user's gender
+            # 2. Users who are bi
+            match_filter = (
+                Q(profile__gender_preferences=user_gender) |  # Users interested in current user's gender
+                Q(profile__gender_preferences='bi')  # Users who are bi
+            )
+        else:
+            # For non-bi users, show:
+            # 1. Users of preferred gender who are interested in user's gender
+            # 2. Users of preferred gender who are bi
+            match_filter = (
+                Q(profile__gender=user_preference) &  # Must match user's gender preference
+                (Q(profile__gender_preferences=user_gender) |  # And either interested in user's gender
+                    Q(profile__gender_preferences='bi'))  # Or are bi
+            )
+        
+
+        # Combine filters
+        potential_matches = Users.objects.select_related('profile', 'images').exclude(
+            id__in=seen_profiles
+            ).exclude(
+                id=current_user.id
+            ).filter(
+                base_filters & match_filter
+            )
             
-            user_profile = current_user.profile
-            preferred_gender = user_profile.gender_preferences
+        # Get the next profile to show
+        next_profile = potential_matches.first()
+        
+        if next_profile:
+            serializer = DatingCardSerializer(next_profile)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"message": "No more profiles available"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+class ActionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target_user_id = request.data.get('target_user_id')
+        user_action = request.data.get('action')  # 'reject' or 'flick_message'
+
+        if not target_user_id:
+            return Response({"error": "target_user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user_action not in ['reject', 'flick_message']:
+            return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
             
-            if preferred_gender == 'bi':
-                gender_filter = Q()  
-            else:
-                gender_filter = Q(profile__gender=preferred_gender)
+        # Record the swipe
+        ActionHistory.objects.create(
+            user=request.user,
+            target_user_id=target_user_id,
+            action=user_action
+        )
+        
+        # If it's a right swipe, check for a match
+        if user_action == 'flick_message':
+            # Check if the other user has already right-swiped on current user
+            mutual_interest = ActionHistory.objects.filter(
+                user_id=target_user_id,
+                target_user_id=request.user.id,
+                action='flick_message'
+            ).exists()
             
-            users = Users.objects.filter(
-                is_active=True,
-                is_email_verified=True,
-                is_profile_updated=True,
-                profile__isnull=False,
-                images__isnull=False).filter(gender_filter).exclude(id=current_user.id).select_related('profile','images')
-            
-            serializer = DatingCardSerializer(users, many=True)
-            return Response({'status': 'success','data': serializer.data })
-            
-        except Exception as e:
-            return Response({'status': 'error','message': str(e)}, status=500)
+            if mutual_interest:
+                # Create a match!
+                Match.objects.create(
+                    user1=request.user,
+                    user2=Users.objects.get(id=target_user_id)
+                )
+                return Response({
+                    "message": "It's a match!",
+                    "matched": True
+                })
+        
+        # Get next profile
+        return self.get_next_profile(request)
+    
+    def get_next_profile(self, request):
+        # Reuse the logic from PotentialMatchesView
+        view = PotentialMatchesView()
+        return view.get(request)
+    

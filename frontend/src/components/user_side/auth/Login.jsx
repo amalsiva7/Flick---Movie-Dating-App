@@ -102,13 +102,12 @@ const Login = () => {
         error.response.data.email[0] === "Your account is blocked. Please contact support for assistance"
       ) {
         toast.error(error.response.data.email[0]);  // Blocked account error message
-      } else {
-        toast.error("Error occurred during login. Please try again.");
       }
     
       setErrors({
         apiError: error.response?.data?.message || "An error occurred during login. Please try again"
       });
+
     }
     
     
