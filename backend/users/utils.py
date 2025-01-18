@@ -3,6 +3,7 @@
 from datetime import timedelta
 from django.utils.timezone import now
 
+
 def format_time_difference(last_updated_at):
     now_time = now()
     diff = now_time - last_updated_at
@@ -24,3 +25,4 @@ def format_time_difference(last_updated_at):
     else:
         years = diff.days // 365
         return f"{years} year{'s' if years > 1 else ''} ago"
+

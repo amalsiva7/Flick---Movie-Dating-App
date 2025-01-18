@@ -19,6 +19,8 @@ from .utils import *
 from rest_framework.parsers import MultiPartParser,FormParser
 from django.db.models import Q
 from datetime import datetime
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 
 
@@ -418,10 +420,30 @@ class UpdateProfilePicView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+            'has_next': self.page.has_next(),
+            'has_previous': self.page.has_previous()
+        })
+
+
 
 class PotentialMatchesView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination 
 
     def get(self, request):
         # Get the current user
@@ -475,11 +497,12 @@ class PotentialMatchesView(APIView):
             )
             
         # Get the next profile to show
-        next_profile = potential_matches.first()
+        paginator = self.pagination_class()
+        paginated_matches = paginator.paginate_queryset(potential_matches, request)
         
-        if next_profile:
-            serializer = DatingCardSerializer(next_profile)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+        if paginated_matches:
+            serializer = DatingCardSerializer(paginated_matches,many=True)
+            return paginator.get_paginated_response(serializer.data)
         else:
             return Response(
                 {"message": "No more profiles available"}, 
@@ -488,6 +511,7 @@ class PotentialMatchesView(APIView):
         
 class ActionView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
     def post(self, request):
         target_user_id = request.data.get('target_user_id')
@@ -498,11 +522,20 @@ class ActionView(APIView):
         
         if user_action not in ['reject', 'flick_message']:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+        try:
+            target_user = Users.objects.get(id=target_user_id)
+        except Users.DoesNotExist:
+            return Response(
+                {"error": "Target user not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
             
         # Record the swipe
         ActionHistory.objects.create(
             user=request.user,
-            target_user_id=target_user_id,
+            target_user=target_user,
             action=user_action
         )
         
@@ -510,8 +543,8 @@ class ActionView(APIView):
         if user_action == 'flick_message':
             # Check if the other user has already right-swiped on current user
             mutual_interest = ActionHistory.objects.filter(
-                user_id=target_user_id,
-                target_user_id=request.user.id,
+                user_id=target_user,
+                target_user=request.user,
                 action='flick_message'
             ).exists()
             
@@ -519,11 +552,12 @@ class ActionView(APIView):
                 # Create a match!
                 Match.objects.create(
                     user1=request.user,
-                    user2=Users.objects.get(id=target_user_id)
+                    user2=target_user
                 )
                 return Response({
                     "message": "It's a match!",
-                    "matched": True
+                    "matched": True,
+                    "next_profiles": self.get_next_profiles(request).data
                 })
         
         # Get next profile
