@@ -501,7 +501,7 @@ class PotentialMatchesView(APIView):
         paginated_matches = paginator.paginate_queryset(potential_matches, request)
         
         if paginated_matches:
-            serializer = DatingCardSerializer(paginated_matches,many=True)
+            serializer = DatingCardSerializer(paginated_matches,many=True,context={'request': request})
             return paginator.get_paginated_response(serializer.data)
         else:
             return Response(
@@ -531,12 +531,12 @@ class ActionView(APIView):
                 {"error": "Target user not found"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
-            
-        # Record the swipe
-        ActionHistory.objects.create(
+        
+        # Check if an action already exists for this user and target user
+        action_record, created = ActionHistory.objects.update_or_create(
             user=request.user,
             target_user=target_user,
-            action=user_action
+            defaults={'action': user_action}
         )
         
         # If it's a right swipe, check for a match

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ProfileForm from "../userProfile/userprofileComponents/ProfileForm";
 import axiosInstance from "../../../utils/axiosConfig";
 import HeartLoader from "../../loader/HeartLoader";
+import DatingCard from "../userdatecard/DatingCard";
 
 
 const UserCard = () => {
@@ -46,11 +47,17 @@ const UserCard = () => {
     );
   }
 
+  if (isProfileUpdated) {
+    return <DatingCard />;
+  }
+
   return (
     <div className="relative bg-white shadow-md rounded-lg border p-4 h-full w-3/4 left-32 flex justify-center items-center">
       {!hasProfile ? (
         <div className="flex flex-col items-center justify-center space-y-4 h-64">
-          <h1 className="text-2xl font-semibold text-gray-800">Welcome to Your Dating Journey!</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Welcome to Your Dating Journey!
+          </h1>
           <p className="text-gray-600 text-center max-w-md">
             Create your profile to start connecting with amazing people and discover meaningful relationships.
           </p>
@@ -61,7 +68,7 @@ const UserCard = () => {
             Create Your Profile Now
           </button>
         </div>
-      ) : !isProfileUpdated ? (
+      ) : (
         <div className="flex flex-col items-center justify-center space-y-4 h-64">
           <h1 className="text-2xl font-semibold text-gray-800">Complete Your Profile</h1>
           <p className="text-gray-600 text-center max-w-md">
@@ -73,14 +80,6 @@ const UserCard = () => {
           >
             Complete Profile
           </button>
-        </div>
-      ) : (
-        <div>
-          <div className="flex justify-between items-center mb-6">
-
-            <h1 className="text-2xl font-semibold text-gray-800">Welcome User</h1>
-            
-          </div>
         </div>
       )}
     </div>

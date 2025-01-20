@@ -3,6 +3,7 @@ from .models import *
 from django.contrib.auth.hashers import make_password,check_password
 from django.contrib.auth import authenticate
 from datetime import datetime
+from .utils import *
 
 
 ##User 
@@ -137,10 +138,19 @@ class DatingCardSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
     preferred_gender = serializers.SerializerMethodField()
+    match_percentage = serializers.SerializerMethodField()
     
     class Meta:
         model = Users
-        fields = ['id', 'username', 'age','gender','preferred_gender', 'interests', 'images']
+        fields = ['id', 'username', 'age','gender','preferred_gender', 'interests', 'images','match_percentage']
+
+    
+    def get_match_percentage(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(obj, 'profile'):
+            current_user_profile = request.user.profile
+            return calculate_match_percentage(current_user_profile, obj.profile)
+        return 0
 
     def get_gender(self,obj):
         print("Getting gender of user :",obj.username)
