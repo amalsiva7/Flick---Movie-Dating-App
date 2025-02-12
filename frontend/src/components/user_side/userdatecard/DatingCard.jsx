@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CircleChevronLeft, CircleChevronRight, Heart, HeartOff, Send, X } from 'lucide-react';
+import { CircleChevronLeft, CircleChevronRight, Heart, HeartOff, Send, X } from 'lucide-react';
 import axiosInstance from '../../../utils/axiosConfig';
 import toast from 'react-hot-toast';
 
@@ -20,7 +20,6 @@ const DatingCard = () => {
       setLoading(true);
       const response = await axiosInstance.get(`users/potential-matches/?page=${page}`);
       const data = response.data;
-      
       
       // Update pagination information
       setPaginationInfo({
@@ -46,6 +45,11 @@ const DatingCard = () => {
   useEffect(() => {
     fetchProfiles();
   }, []);
+
+  // Reset image index when changing profiles
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [currentIndex]);
 
   const handleAction = async (action, userId) => {
     try {
@@ -78,6 +82,9 @@ const DatingCard = () => {
   };
 
   const handleImageNavigation = (direction) => {
+    const currentProfile = profiles[currentIndex];
+    if (!currentProfile) return;
+    
     const totalImages = currentProfile.images.length;
     if (direction === 'left') {
       setCurrentImageIndex((prevIndex) =>
@@ -91,7 +98,30 @@ const DatingCard = () => {
   };
 
   const handlePrevious = () => {
-    setCurrentIndex(prev => Math.max(0, prev - 1));
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    } else if (currentPage > 1) {
+      const prevPage = currentPage - 1;
+      setLoading(true);
+      axiosInstance.get(`users/potential-matches/?page=${prevPage}`)
+        .then(response => {
+          const data = response.data;
+          setProfiles(data.results);
+          setCurrentPage(prevPage);
+          setCurrentIndex(data.results.length - 1);
+          setPaginationInfo({
+            totalPages: data.total_pages,
+            hasNext: data.has_next,
+            totalProfiles: data.count
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching previous page:', error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
   };
 
   if (loading && profiles.length === 0) {
@@ -125,7 +155,7 @@ const DatingCard = () => {
 
   if (!currentProfile) {
     return (
-      <div className="relative shadow-md rounded-lg border p-4 h-full w-3/4 left-32 bg-yellow-300">
+      <div className="relative shadow-md rounded-lg border p-4 bg-[#FFFF46] z-10 h-full w-3/4 left-32">
         <div className="flex items-center justify-center h-64">
           <div className="text-xl">No profiles available</div>
         </div>
@@ -135,15 +165,19 @@ const DatingCard = () => {
 
   return (
     <div className="relative w-2/3 h-full ml-32">
-      {currentIndex > 0 && (
+      {(currentIndex > 0 || currentPage > 1) && (
         <button
           onClick={handlePrevious}
-          className="absolute top-1/2 left-4 bg-slate-700 p-4 rounded-lg hover:bg-slate-600 transition-colors"
+          className="absolute top-1/2 left-4 z-20 transform -translate-y-1/2 hover:scale-110 transition-transform duration-200"
+          disabled={loading}
         >
-          <ArrowLeft className="text-white" size={24} />
+          <CircleChevronLeft 
+            className={`text-slate-700 hover:text-slate-600 ${loading ? 'opacity-50' : ''}`} 
+            size={40} 
+          />
         </button>
       )}
-  
+
       <div className="relative w-full h-full">
         {/* Bottom div (Peach color) */}
         <div className="absolute inset-0 shadow-md rounded-lg border p-4 bg-[#ffc6a4] rotate-6 h-full w-3/4 left-32"></div>
@@ -203,9 +237,9 @@ const DatingCard = () => {
               </div>
               <div className="flex gap-2">
                 <div className="text-lg font-medium italic">Match percent :</div>
-                <div className="text-xl font-bold italic">
-                  {currentProfile.match_percentage} %
-                </div>
+                  <div className="text-xl font-bold italic">
+                    {currentProfile.match_percentage} %
+                  </div>
               </div>
             </div>
   
@@ -243,7 +277,6 @@ const DatingCard = () => {
       </div>
     </div>
   );
-  
 };
 
 export default DatingCard;
