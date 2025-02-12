@@ -3,6 +3,7 @@ import { Heart, MessageCircle, User, Zap } from 'lucide-react';
 import { FaHamburger } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import NotificationIcon from './userheaderComponents/NotificationIcon';
 
 const UserHomeHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,7 +43,7 @@ const UserHomeHeader = () => {
 
       {/* Right icons (Heart, MessageCircle, User) */}
       <div className="flex items-center gap-20 relative">
-        <Heart className="w-6 h-6 text-gray-600 cursor-pointer hover:text-red-500 transition-colors" />
+        <NotificationIcon/>
         <MessageCircle className="w-6 h-6 text-gray-600 cursor-pointer hover:text-blue-500 transition-colors" />
         <div className="relative">
           {/* User icon with dropdown toggle */}

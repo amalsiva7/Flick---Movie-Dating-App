@@ -52,6 +52,7 @@ const DatingCard = () => {
   }, [currentIndex]);
 
   const handleAction = async (action, userId) => {
+
     try {
       const response = await axiosInstance.post('users/card-action/', {
         target_user_id: userId,
@@ -59,7 +60,29 @@ const DatingCard = () => {
       });
       
       if (response.data.matched) {
-        alert("It's a match!");
+        const currentProfile = profiles[currentIndex]
+
+        toast.success(
+        <div className="flex flex-col items-center">
+          <img 
+            src={`${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}${currentProfile.images[0]}`} 
+            alt={currentProfile.username}
+            className="w-24 h-24 object-cover rounded-full mb-2"
+          />
+          <div className="text-xl font-bold">It's a match with {currentProfile.username}!</div>
+        </div>,
+        {
+          duration: 4000,
+          style: {
+            minWidth: '300px',
+            padding: '20px',
+            background: '#f0f0f0',
+            color: '#333',
+            borderRadius: '10px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }
+        }
+      );
       }
 
       // Move to next profile

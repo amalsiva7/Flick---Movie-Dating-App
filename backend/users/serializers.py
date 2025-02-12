@@ -153,49 +153,51 @@ class DatingCardSerializer(serializers.ModelSerializer):
         return 0
 
     def get_gender(self,obj):
-        print("Getting gender of user :",obj.username)
+        # print("Getting gender of user :",obj.username)
+        pass
 
         if hasattr(obj,'profile'):
             gender = obj.profile.gender
-            print(f"Gender of user: {obj.username} is {obj.profile.gender}")
+            # print(f"Gender of user: {obj.username} is {obj.profile.gender}")
             return gender
         
     def get_preferred_gender(self,obj):
-        print("Getting gender of user :",obj.username)
+        # print("Getting gender of user :",obj.username)
+        pass
 
         if hasattr(obj,'profile'):
             preferred_gender = obj.profile.gender_preferences
-            print(f"Gender of user: {obj.username} is {obj.profile.gender_preferences}")
+            # print(f"Gender of user: {obj.username} is {obj.profile.gender_preferences}")
             return preferred_gender
         
     def get_age(self, obj):
-        print(f"Calculating age for user: {obj.username}")  # Debug print
+        # print(f"Calculating age for user: {obj.username}")  # Debug print
         if hasattr(obj, 'profile') and obj.profile.birth_date:
             today = datetime.today()
             birth_date = obj.profile.birth_date
             age = today.year - birth_date.year - (
                 (today.month, today.day) < (birth_date.month, birth_date.day)
             )
-            print(f"Calculated age: {age}")  # Debug print
+            # print(f"Calculated age: {age}")  # Debug print
             return age
         return None
     
     def get_interests(self, obj):
-        print(f"Getting interests for user: {obj.username}")  # Debug print
+        # print(f"Getting interests for user: {obj.username}")  # Debug print
         if hasattr(obj, 'profile'):
             interests = obj.profile.interests
-            print(f"Found interests: {interests}")  # Debug print
+            # print(f"Found interests: {interests}")  # Debug print
             return interests
         return []
     
     def get_images(self, obj):
-        print(f"Getting images for user: {obj.username}")  # Debug print
+        # print(f"Getting images for user: {obj.username}")  # Debug print
         if hasattr(obj, 'images'):
             images = []
             for i in range(1, 5):
                 image = getattr(obj.images, f'image{i}')
                 if image:
                     images.append(image.url)
-            print(f"Found images: {images}")  # Debug print
+            # print(f"Found images: {images}")  # Debug print
             return images
         return []

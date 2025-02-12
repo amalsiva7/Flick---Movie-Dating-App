@@ -8,6 +8,7 @@ import string
 import uuid
 import hashlib
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 # Create your models here.
 
@@ -124,3 +125,35 @@ class Match(models.Model):
     user2 = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='matches_as_user2')
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('flick', 'Flick Received'),
+        ('match', 'New Match'),
+        ('message', 'New Message'),
+        ('unmatch', 'Unmatched'),
+        ('system', 'System Notification'),
+    ]
+
+    recipient = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='notifications_received')
+    sender = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='notifications_sent', null=True, blank=True)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    related_match = models.ForeignKey('Match', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', '-created_at']),
+            models.Index(fields=['notification_type']),
+            models.Index(fields=['is_read']),
+        ]
+
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()

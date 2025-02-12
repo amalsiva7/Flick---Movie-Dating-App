@@ -13,6 +13,13 @@ const UserCard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+
+  // Websocket
+  const[socket,setSocket] = useState(null);
+  const[notification,setNotification] = useState([])
+
+  
+
   useEffect(() => {
     checkUserProfile();
   }, []);

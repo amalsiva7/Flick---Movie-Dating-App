@@ -40,10 +40,15 @@ const UserWrapper = () => {
   //     if (authentication_user.isAdmin) {
   //       navigate('/admin'); // Adjust this path as needed
   //     } else {
-  //       navigate('/userHome');
+  //       navigate('/user/home');
   //     }
   //   }
   // }, [authentication_user, dispatch, navigate]);
+  
+
+  useEffect(()=>{
+    checkAuth();
+  })
 
 
   const routes = useRoutes([

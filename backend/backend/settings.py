@@ -60,14 +60,18 @@ SIMPLE_JWT = {
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'users',
     'user_admin',
+
     'rest_framework',
     'corsheaders',
 ]
@@ -101,6 +105,18 @@ TEMPLATES = [
         },
     },
 ]
+
+
+ASGI_APPLICATION = 'backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('localhost', 6379)],
+        },
+    },
+}
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 

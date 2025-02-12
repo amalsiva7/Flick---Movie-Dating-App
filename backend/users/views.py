@@ -36,7 +36,6 @@ class CreateUserView(APIView):
         existing_user = Users.objects.filter(email=email).first()
 
         if existing_user:
-            print(f"Inside....existing user : {existing_user}************************************")
 
             if not existing_user.is_email_verified:
                 send_email.delay(existing_user.id)
@@ -187,7 +186,7 @@ class LoginView(APIView):
 
     def post(self,request):
         serializer = LoginSerializer(data=request.data)
-        print(serializer.is_valid(),"********************SERIALIZER IN LOGIN")
+        # print(serializer.is_valid(),"********************SERIALIZER IN LOGIN")
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
@@ -297,9 +296,9 @@ class SetProfilePicView(APIView):
 
     def post(self, request,):
         try:
-            print("Request Data:", request.data)
-            print("Request Files:", request.FILES)  # Debug file data
-            print("Request Headers:", request.headers)
+            # print("Request Data:", request.data)
+            # print("Request Files:", request.FILES)  # Debug file data
+            # print("Request Headers:", request.headers)
 
             if not request.FILES:
                 return Response(
@@ -327,8 +326,7 @@ class SetProfilePicView(APIView):
                 # Save the updated UserImage instance with the new images
                 serializer.save()
 
-                print("Uploaded files:", request.FILES)
-                print("UserImage instance data:", serializer.validated_data)
+                
 
                 
                 return Response(
@@ -509,6 +507,11 @@ class PotentialMatchesView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 class ActionView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
@@ -538,26 +541,115 @@ class ActionView(APIView):
             target_user=target_user,
             defaults={'action': user_action}
         )
-        
+
+        print(user_action,"action is created")
+
+        channel_layer = get_channel_layer()
+
         # If it's a right swipe, check for a match
         if user_action == 'flick_message':
+            notification = Notification.objects.create(
+                recipient=target_user,
+                sender=request.user,
+                notification_type='flick',
+                title='New Flick Received',
+                message=f'{request.user.username} sent you a flick!'
+            )
+
+            print(notification.recipient,notification.message,"notification is created")
+            
+            try:
+                print("hiii in action view")
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user.id}",
+                    {
+                        'type': 'send_notification',
+                        'message': {
+                            'id': notification.id,
+                            'notification_type': notification.notification_type,
+                            'title': notification.title,
+                            'message': notification.message
+                        }
+                                    }
+                )
+            except Exception as e:
+                print(f"Error sending notification: {e}")
+
+
+
             # Check if the other user has already right-swiped on current user
             mutual_interest = ActionHistory.objects.filter(
                 user_id=target_user,
                 target_user=request.user,
                 action='flick_message'
             ).exists()
+
             
             if mutual_interest:
+
                 # Create a match!
-                Match.objects.create(
+                match = Match.objects.create(
                     user1=request.user,
                     user2=target_user
                 )
+
+                # Create notification for the logged-in user
+                notification_user1 = Notification.objects.create(
+                    recipient=request.user,
+                    sender=target_user,
+                    notification_type='match',
+                    title='New Match!',
+                    message=f'You matched with {target_user.username}!',
+                    related_match=match
+                )
+
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{request.user.id}",
+                    {
+                        'type': 'send_notification',
+                        'message': {
+                            'id': notification_user1.id,
+                            'notification_type': notification_user1.notification_type,
+                            'title': notification_user1.title,
+                            'message': notification_user1.message
+                        }
+                    }
+                )
+
+
+                # Create notification for the target user
+                notification_user2 = Notification.objects.create(
+                    recipient=target_user,
+                    sender=request.user,
+                    notification_type='match',
+                    title='New Match!',
+                    message=f'You matched with {request.user.username}!',
+                    related_match=match
+                )
+
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user.id}",
+                    {
+                        'type': 'send_notification',
+                        'message': {
+                            'id': notification_user2.id,
+                            'notification_type': notification_user2.notification_type,
+                            'title': notification_user2.title,
+                            'message': notification_user2.message
+                        }
+                    }
+                )
+
+                logged_in_user = {
+                'username': request.user.username,
+                'profile_picture': request.user.images.image1.url if request.user.images.image1 else ''
+                
+                }
                 return Response({
                     "message": "It's a match!",
                     "matched": True,
-                    "next_profiles": self.get_next_profiles(request).data
+                    'logged_in_user':logged_in_user,
+                    "next_profiles": self.get_next_profile(request).data
                 })
         
         # Get next profile

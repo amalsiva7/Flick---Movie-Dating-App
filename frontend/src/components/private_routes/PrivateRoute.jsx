@@ -8,11 +8,12 @@ function PrivateRoutes({children}) {
     const[isAuthenticated,setisAuthenticated] = useState(false);
     const[isLoading,setIsLoading] = useState(true);
 
-
     useEffect(() => {
         const fetchData = async () => {
           const authInfo = await isAuthUser();
           setisAuthenticated(authInfo.isAuthenticated);
+          
+
           setTimeout(() => {
             setIsLoading(false);
           }, 1000);
