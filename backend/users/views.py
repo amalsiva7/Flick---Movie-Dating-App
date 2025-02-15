@@ -557,7 +557,7 @@ class ActionView(APIView):
             )
 
             print(notification.recipient,notification.message,"notification is created")
-            
+
             try:
                 print("hiii in action view")
                 async_to_sync(channel_layer.group_send)(
@@ -586,14 +586,13 @@ class ActionView(APIView):
 
             
             if mutual_interest:
-
-                # Create a match!
+                # **Create a Match**
                 match = Match.objects.create(
                     user1=request.user,
                     user2=target_user
                 )
 
-                # Create notification for the logged-in user
+                # **Create and Send Match Notification**
                 notification_user1 = Notification.objects.create(
                     recipient=request.user,
                     sender=target_user,
@@ -603,21 +602,6 @@ class ActionView(APIView):
                     related_match=match
                 )
 
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{request.user.id}",
-                    {
-                        'type': 'send_notification',
-                        'message': {
-                            'id': notification_user1.id,
-                            'notification_type': notification_user1.notification_type,
-                            'title': notification_user1.title,
-                            'message': notification_user1.message
-                        }
-                    }
-                )
-
-
-                # Create notification for the target user
                 notification_user2 = Notification.objects.create(
                     recipient=target_user,
                     sender=request.user,
@@ -627,18 +611,41 @@ class ActionView(APIView):
                     related_match=match
                 )
 
+                # **Real-time Match Notification for Both Users**
+                match_data = {
+                    'type': 'match',
+                    'message': f"It's a match! You and {target_user.username} can now chat!",
+                    'matched_user': {
+                        'username': target_user.username,
+                        'profile_picture': target_user.images.image1.url if target_user.images.image1 else ''
+                    }
+                }
+
+                # **Send WebSocket Event to Logged-in User**
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{request.user.id}",
+                    {
+                        'type': 'send_notification',
+                        'message': match_data
+                    }
+                )
+
+                # **Send WebSocket Event to Target User**
                 async_to_sync(channel_layer.group_send)(
                     f"user_{target_user.id}",
                     {
                         'type': 'send_notification',
                         'message': {
-                            'id': notification_user2.id,
-                            'notification_type': notification_user2.notification_type,
-                            'title': notification_user2.title,
-                            'message': notification_user2.message
+                            'type': 'match',
+                            'message': f"It's a match! You and {request.user.username} can now chat!",
+                            'matched_user': {
+                                'username': request.user.username,
+                                'profile_picture': request.user.images.image1.url if request.user.images.image1 else ''
+                            }
                         }
                     }
                 )
+
 
                 logged_in_user = {
                 'username': request.user.username,
@@ -660,3 +667,41 @@ class ActionView(APIView):
         view = PotentialMatchesView()
         return view.get(request)
     
+
+class NotificationListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if request.user.id != int(user_id):
+            return Response({'error':'Unauthorized user'},status=status.HTTP_403_FORBIDDEN )
+        
+        notifications = Notification.objects.filter(recipient = request.user).order_by('-created_at')
+
+        unread_count = notifications.filter(is_read = False).count()
+
+        notifications_data = [
+            {
+                'id':notification.id,
+                'message' : notification.message,
+                'read': notification.is_read,
+                'timestamp':notification.created_at
+            }
+            for notification in notifications
+        ]
+
+        return Response({
+            "notifications": notifications_data,
+            "unread_count": unread_count
+        })
+    
+class MarkNotificationsAsRead(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        if request.user.id != int(user_id):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Mark all unread notifications as read
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+
+        return Response({"message": "Notifications marked as read"})

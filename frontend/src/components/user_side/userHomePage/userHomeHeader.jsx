@@ -9,6 +9,7 @@ const UserHomeHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate()
+  // const username = useSelector((state) => state.authentication_user.username);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -54,7 +55,7 @@ const UserHomeHeader = () => {
 
           {/* Dropdown menu */}
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-40">
+            <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-40 z-50">
               <button
               onClick={handleLogout}   
                 className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"

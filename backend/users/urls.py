@@ -19,4 +19,7 @@ urlpatterns = [
 
     path('potential-matches/',PotentialMatchesView.as_view(),name="potential-matches"),
     path('card-action/',ActionView.as_view(),name="card-action"),
+
+    path('notifications/<int:user_id>/', NotificationListView.as_view(), name='notifications'),
+    path('notifications/<int:user_id>/mark-as-read/', MarkNotificationsAsRead.as_view(), name='mark-notifications-read'),
 ]

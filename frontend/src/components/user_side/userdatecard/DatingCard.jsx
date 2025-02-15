@@ -58,6 +58,8 @@ const DatingCard = () => {
         target_user_id: userId,
         action: action
       });
+
+      console.log('clicked flick message in date card')
       
       if (response.data.matched) {
         const currentProfile = profiles[currentIndex]
@@ -209,7 +211,7 @@ const DatingCard = () => {
         <div className="absolute inset-0 shadow-md rounded-lg border p-4 bg-[#f2fedc] -rotate-6 h-full w-3/4 left-32"></div>
   
         {/* Top div (Yellow color) */}
-        <div className="absolute inset-0 shadow-md rounded-lg border p-4 bg-[#FFFF46] z-10 h-full w-3/4 left-32">
+        <div className="absolute inset-0 shadow-md rounded-lg border p-4 bg-yellow-300 z-10 h-full w-3/4 left-32">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="text-2xl font-semibold italic">
