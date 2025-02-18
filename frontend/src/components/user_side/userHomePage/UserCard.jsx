@@ -55,7 +55,7 @@ const UserCard = () => {
   }
 
   if (isProfileUpdated) {
-    return <DatingCard />;
+    return <DatingCard/>;
   }
 
   return (

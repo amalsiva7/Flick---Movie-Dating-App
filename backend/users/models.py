@@ -157,3 +157,31 @@ class Notification(models.Model):
     def mark_as_read(self):
         self.is_read = True
         self.save()
+
+
+class FlickQuestion(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='asked_questions')
+    question_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['is_active']),
+        ]
+
+class FlickAnswer(models.Model):
+    question = models.ForeignKey(FlickQuestion, on_delete=models.CASCADE, related_name='answers')
+    responder = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='given_answers')
+    answer_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['question', '-created_at']),
+            models.Index(fields=['responder', '-created_at']),
+        ]
+

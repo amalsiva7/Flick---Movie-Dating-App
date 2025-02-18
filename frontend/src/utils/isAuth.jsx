@@ -37,10 +37,13 @@ const updateUserToken = async () => {
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
 
+      const profileResponse = await axiosInstance.get("/users/user-profile/");
+      const username = profileResponse.data.username
+
       // Decode new access token
       const decoded = jwtDecode(res.data.access);
       return {
-        username: decoded.username,
+        username: username,
         id: decoded.user_id,
         isAuthenticated: true,
         isAdmin: decoded.isAdmin
@@ -67,9 +70,12 @@ const isAuthUser = async () => {
 
     // Check if token is valid and not expired
     if (decodedToken.exp > currentTime) {
+      const profileResponse = await axiosInstance.get("/users/user-profile/");
+      const username = profileResponse.data.username
+
       return {
         id: decodedToken.user_id,
-        username: decodedToken.username,
+        username: username,
         isAuthenticated: true,
         isAdmin: decodedToken.isAdmin,
       };

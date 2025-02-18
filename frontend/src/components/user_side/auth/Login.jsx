@@ -73,11 +73,15 @@ const Login = () => {
         console.log("Decoded Token: ", decodedToken);
         console.log("isAdmin****************",decodedToken.isAdmin)
 
+        const profileResponse = await axiosInstance.get("/users/user-profile/");
+        const username = profileResponse.data.username
+        console.log("username in login :",username)
+
         dispatch(
             setAuthentication({
                 id:decodedToken.user_id,
-                username: decodedToken.username,
-                isAutheticated:decodedToken.isAutheticated,
+                username: username,
+                isAuthenticated:decodedToken.isAuthenticated,
                 isAdmin:decodedToken.isAdmin,
             })
         );

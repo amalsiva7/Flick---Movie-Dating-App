@@ -294,7 +294,7 @@ class SetProfilePicView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser,FormParser]
 
-    def post(self, request,):
+    def post(self, request):
         try:
             # print("Request Data:", request.data)
             # print("Request Files:", request.FILES)  # Debug file data
@@ -646,7 +646,6 @@ class ActionView(APIView):
                     }
                 )
 
-
                 logged_in_user = {
                 'username': request.user.username,
                 'profile_picture': request.user.images.image1.url if request.user.images.image1 else ''
@@ -658,7 +657,6 @@ class ActionView(APIView):
                     'logged_in_user':logged_in_user,
                     "next_profiles": self.get_next_profile(request).data
                 })
-        
         # Get next profile
         return self.get_next_profile(request)
     
@@ -705,3 +703,67 @@ class MarkNotificationsAsRead(APIView):
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
 
         return Response({"message": "Notifications marked as read"})
+
+
+
+class FlickQuestionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        questions = FlickQuestion.objects.filter(user=request.user)[:10]
+        serializer = FlickQuestionSerializer(questions, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = FlickQuestionSerializer(data=request.data)
+        if serializer.is_valid():
+            #Deactivate all previous active questions
+            FlickQuestion.objects.filter(user=request.user, is_active=True).update(is_active=False)
+            
+            #Save new question
+            # serializer.save(user=request.user)
+            question = serializer.save(user=request.user)
+
+            # In FlickQuestionView
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f'user_{request.user.id}',
+                {
+                    'type': 'send_notification',
+                    'message': {
+                        'id': question.id,
+                        'question_text': question.question_text,
+                        'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),  # Format as needed
+                        'is_active': True,
+                    }
+                }
+            )
+
+            
+            #Create notification for new question
+            # notification = Notification.objects.create(
+            #     recipient=request.user,
+            #     message=f"Your question was posted: {question.question_text[:30]}{'...' if len(question.question_text) > 30 else ''}",
+            # )
+            
+            # #Send real-time notification
+            # channel_layer = get_channel_layer()
+            # async_to_sync(channel_layer.group_send)(
+            #     f'user_{request.user.id}',
+            #     {
+            #         'type': 'send_notification',
+            #         'message': {
+            #             'id': notification.id,
+            #             'message': notification.message,
+            #         }
+            #     }
+            # )
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class FlickAnswerView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self,request):
+        

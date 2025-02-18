@@ -201,3 +201,20 @@ class DatingCardSerializer(serializers.ModelSerializer):
             # print(f"Found images: {images}")  # Debug print
             return images
         return []
+
+
+class FlickQuestionSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    
+    def get_username(self, obj):
+        return obj.user.username if obj.user else None
+    
+    class Meta:
+        model = FlickQuestion
+        fields = ['id', 'username', 'question_text', 'created_at', 'is_active']
+        read_only_fields = ['id', 'username', 'created_at']
+    
+    def create(self, validated_data):
+        return FlickQuestion.objects.create(**validated_data)
+
+

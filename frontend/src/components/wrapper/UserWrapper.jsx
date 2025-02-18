@@ -14,6 +14,7 @@ import { setAuthentication } from '../../Redux/Authentication/authenticationSlic
 import MagicLink from '../user_side/auth/MagicLink';
 import UserProfile from '../user_side/userProfile/UserProfile';
 import UserCard from '../user_side/userhomepage/UserCard';
+import UserFlickPage from '../user_side/userhomepage/UserFlickPage';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -98,6 +99,14 @@ const UserWrapper = () => {
           element: (
             <PrivateRoutes>
               <UserProfile />
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "flick",
+          element: (
+            <PrivateRoutes>
+              <UserFlickPage/>
             </PrivateRoutes>
           )
         },
