@@ -11,6 +11,7 @@ const AdminPrivateRoute = ({children}) =>{
 
 
     useEffect(()=>{
+        console.log("your admin came here to AdminProvateRoute")
         const fetchData = async() =>{
             const authInfo = await isAuthUser();
             setIsAuthenticated(authInfo.isAuthenticated);

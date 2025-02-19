@@ -21,6 +21,7 @@ from django.db.models import Q
 from datetime import datetime
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+import stripe
 
 
 
@@ -190,16 +191,23 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
+            
+            # Add custom claims to both refresh and access tokens
+            refresh['user_id'] = user.id
+            refresh['username'] = user.username
             refresh['isAdmin'] = user.is_superuser
+            refresh['isAuthenticated'] = True
 
-            return Response(
-                {
-                    'message':'Login Succesfully',
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                },
-                status=status.HTTP_200_OK,
-            )
+            # Access token inherits claims from refresh token
+            access_token = refresh.access_token
+            
+            return Response({
+                'message': 'Login Successful',
+                'refresh': str(refresh),
+                'access': str(access_token),
+                'username': user.username,  # Send username in response
+                'user_id': user.id  # Send user_id in response
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -212,6 +220,7 @@ class ProfileView(APIView):
     def get(self, request):
 
         print("Call to ProfileView")
+        print("request.user.is_profile_updated",request.user)
 
         if not request.user.is_profile_updated:
                 return Response({
@@ -229,8 +238,16 @@ class ProfileView(APIView):
 
             return Response(profile_data, status=200)
         except Profile.DoesNotExist:
-            return Response({"error": "Profile not found."}, status=404)
-
+            return Response({
+                "error": "Profile not found",
+                "username": request.user.username,
+                "email": request.user.email,
+                "is_profile_updated": False
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 ##Create UserProfile View
@@ -727,14 +744,15 @@ class FlickQuestionView(APIView):
             # In FlickQuestionView
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
-                f'user_{request.user.id}',
+                f'flick_{request.user.id}',
                 {
-                    'type': 'send_notification',
-                    'message': {
+                    'type': 'send_flick_message',
+                    'flick_data': {
                         'id': question.id,
                         'question_text': question.question_text,
-                        'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),  # Format as needed
+                        'created_at': question.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                         'is_active': True,
+                        'username': request.user.username 
                     }
                 }
             )
@@ -762,8 +780,124 @@ class FlickQuestionView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class FlickAnswerView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def post(self,request):
-        
+class SubscriptionPlanListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        plans = SubscriptionPlan.objects.all()
+        serializer = SubscriptionPlanSerializer(plans, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# class CreateStripeCheckoutSessionView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         plan_id = request.data.get('plan_id')
+#         if not plan_id:
+#             return Response({"error": "Plan ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             plan = SubscriptionPlan.objects.get(pk=plan_id)
+#             # print(plan.stripe_price_id,"THIS IS THE PLAN ID **********************")
+#             # print(settings.STRIPE_SUCCESS_URL,"THIS IS THE success url  **********************")
+#             # print(settings.STRIPE_CANCEL_URL,"THIS IS THE CANCEL url  **********************")
+#             # Create a Stripe Checkout Session
+#             checkout_session = stripe.checkout.Session.create(
+#                 payment_method_types=['card'],
+#                 line_items=[{
+#                     'price': plan.stripe_price_id,  # Use the Stripe Price ID from the plan
+#                     'quantity': 1,
+#                 }],
+#                 mode='subscription',
+#                 success_url=settings.STRIPE_SUCCESS_URL + '?session_id={CHECKOUT_SESSION_ID}',
+#                 cancel_url=settings.STRIPE_CANCEL_URL,
+#             )
+#             # print(checkout_session.url,"checkout_session.url  **********************")
+
+#             return Response({'checkout_url': checkout_session.url, 'session_id': checkout_session.id}, status=status.HTTP_200_OK)
+
+#         except SubscriptionPlan.DoesNotExist:
+#             return Response({"error": "Subscription plan not found."}, status=status.HTTP_404_NOT_FOUND)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# class StripeWebhookView(APIView):
+#     permission_classes = [AllowAny]
+#     def post(self, request, format=None):
+#         payload = request.body
+#         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+#         event = None
+
+#         try:
+#             event = stripe.Webhook.construct_event(
+#                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+#             )
+#         except ValueError as e:
+#             # Invalid payload
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+#         except stripe.error.SignatureVerificationError as e:
+#             # Invalid signature
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+#         # Handle the event
+#         if event['type'] == 'checkout.session.completed':
+#             session = event['data']['object']
+
+#             # Fulfill the purchase...
+#             handle_checkout_session(session)
+
+#         elif event['type'] == 'invoice.payment_succeeded':
+#             session = event['data']['object']
+#             handle_invoice_payment_succeeded(session)
+#         # ... handle other event types
+#         else:
+#             print('Unhandled event type {}'.format(event['type']))
+
+#         return Response(status=status.HTTP_200_OK)
+
+# def handle_checkout_session(session):
+#     # Retrieve the subscription ID and customer ID from the session
+#     stripe_subscription_id = session.get('subscription')
+#     stripe_customer_id = session.get('customer')
+#     print(session,"THIS IS THE SESSION ID")
+#     # Use the customer ID to retrieve the customer object
+#     customer = stripe.Customer.retrieve(stripe_customer_id)
+#     customer_email = customer.get('email')
+#     # Retrieve user from database
+#     try:
+#         user = Users.objects.get(email=customer_email)
+#     except Users.DoesNotExist:
+#         print(f"User not found with email: {customer_email}")
+#         return
+
+#     # Get the Stripe subscription object
+#     stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+#     stripe_price_id = stripe_subscription['items']['data'][0]['price']['id']
+#     # print(stripe_price_id,"THIS IS THE stripe_price_id **********************")
+
+#     try:
+#         plan = SubscriptionPlan.objects.get(stripe_price_id=stripe_price_id)
+#     except SubscriptionPlan.DoesNotExist:
+#         print(f"SubscriptionPlan not found with stripe_price_id: {stripe_price_id}")
+#         return
+#     # Calculate the end date based on the plan duration
+#     end_date = timezone.now() + timedelta(days=plan.duration_days)
+
+#     # Create or update the UserSubscription object
+#     user_subscription, created = UserSubscription.objects.get_or_create(
+#         user=user,
+#         defaults={
+#             'plan': plan,
+#             'stripe_subscription_id': stripe_subscription_id,
+#             'end_date': end_date,
+#             'is_active': True,
+#         }
+#     )
+
+#     if not created:
+#         user_subscription.plan = plan
+#         user_subscription.stripe_subscription_id = stripe_subscription_id
+#         user_subscription.end_date

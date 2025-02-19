@@ -4,9 +4,12 @@ import AdminPrivateRoute from "../private_routes/AdminPrivateRoute";
 import AdminHome from "../admin_side/AdminHome";
 import AdminDashBoard from "../admin_side/AdminDashBoard";
 import AdminUserList from "../admin_side/AdminUserList";
+import AdminSubscriptions from "../admin_side/AdminSubscriptions";
+import AdminEmployees from "../admin_side/AdminEmployees";
 
 
 const AdminWrappper = () =>{
+    console.log("your admin came here to AdminWrappr")
     const routes = useRoutes([
         {
             path:'/',
@@ -25,7 +28,17 @@ const AdminWrappper = () =>{
                     <AdminPrivateRoute>
                         <AdminUserList/>
                     </AdminPrivateRoute>
-                )}
+                )},
+                {path:"/subscriptions",element:(
+                    <AdminPrivateRoute>
+                        <AdminSubscriptions/>
+                    </AdminPrivateRoute>
+                )},
+                {path:"/employees",element:(
+                    <AdminPrivateRoute>
+                        <AdminEmployees/>
+                    </AdminPrivateRoute>
+                )},
             ],
         },
     ]);

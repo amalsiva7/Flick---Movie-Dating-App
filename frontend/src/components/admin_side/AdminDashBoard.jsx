@@ -15,6 +15,7 @@ export default function AdminDashboard() {
 
     const[totalUsers,setTotalUsers] = useState(0);
     const[activeUsers,setActiveUsers] = useState(0);
+    const[activeMatches,setActiveMatches] = useState(0);
     const[users,setUsers] = useState([])
 
 
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
                 console.log(user_count,"*********************************USERCOUNT in AdminDashboard" )
                 setTotalUsers(user_count.total_users || 0)
                 setActiveUsers(user_count.active_users || 0)
+                setActiveMatches(user_count.match_count || 0)
 
             }catch(error){
                 console.log(error)
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
           {/* Total Matches */}
           <MetricCard
             title="Total Matches"
-            value="56,829"
+            value={activeMatches.toLocaleString()}
             color="bg-[#FFFF00]"
           />
 

@@ -57,3 +57,33 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type':'previous_notifications',
             'notifications' :notifications_data
         }))
+
+
+class FlickConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+        self.group_name = f'flick_{self.user_id}'
+
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+        print("Accepting flick connection ")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+        print("Disconnect flick conncection")
+
+    async def send_flick_message(self, event):
+        flick_data = event['flick_data']
+
+        await self.send(text_data=json.dumps({
+            'type': 'flick_message',
+            'flick_data': flick_data
+        }))
+        print(flick_data, "flick_data send from consumer")

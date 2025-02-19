@@ -70,15 +70,29 @@ const isAuthUser = async () => {
 
     // Check if token is valid and not expired
     if (decodedToken.exp > currentTime) {
-      const profileResponse = await axiosInstance.get("/users/user-profile/");
-      const username = profileResponse.data.username
+        console.log("admin in isAuthUser: ", decodedToken.isAdmin);
+        console.log("your admin came here to IsAuthUser");
 
-      return {
-        id: decodedToken.user_id,
-        username: username,
-        isAuthenticated: true,
-        isAdmin: decodedToken.isAdmin,
-      };
+        // If user is admin, return auth info without fetching profile
+        if (decodedToken.isAdmin) {
+            return {
+                id: decodedToken.user_id,
+                username: decodedToken.username,  // Using username from token
+                isAuthenticated: true,
+                isAdmin: decodedToken.isAdmin,
+            };
+        }
+
+        // For non-admin users, fetch profile
+        const profileResponse = await axiosInstance.get("/users/user-profile/");
+        const username = profileResponse.data.username;
+
+        return {
+            id: decodedToken.user_id,
+            username: username,
+            isAuthenticated: true,
+            isAdmin: decodedToken.isAdmin,
+        };
     } else {
       // Token expired, attempt to refresh
       return await updateUserToken();

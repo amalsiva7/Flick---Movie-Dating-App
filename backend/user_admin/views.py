@@ -17,11 +17,16 @@ class UserCount(APIView):
         # Count active users
         active_users = Users.objects.filter(is_email_verified=True, is_active = True).count()
 
+        # Active match count
+        match_count = Match.objects.filter(is_active = True).count()
+
         # Return the response
         return Response(
             {
                 'total_users': total_users,
                 'active_users': active_users,
+                'match_count': match_count,
+
             },
             status=status.HTTP_200_OK
         )

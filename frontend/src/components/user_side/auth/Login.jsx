@@ -62,64 +62,68 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axiosInstance.post("users/login/", formData);
-      console.log("inside try: LOGIN.jsx",response)
-      if (response.status === 200) {
-        localStorage.setItem("access", response.data.access);
-        localStorage.setItem("refresh", response.data.refresh);
+        const response = await axiosInstance.post("users/login/", formData);
+        
+        if (response.status === 200) {
+            const { access, refresh, username, user_id } = response.data;
+            
+            // Store tokens
+            localStorage.setItem("access", access);
+            localStorage.setItem("refresh", refresh);
 
+            const decodedToken = jwtDecode(access);
 
-        const decodedToken = jwtDecode(response.data.access);
-        console.log("Decoded Token: ", decodedToken);
-        console.log("isAdmin****************",decodedToken.isAdmin)
+            console.log("username in Login: ",username)
+            console.log("user_id in Login: ",user_id)
+            console.log("userAuthenticated in Login: ",decodedToken.isAuthenticated)
+            console.log("user isAdmin in Login: ",decodedToken.isAdmin)
+            
+            // Update authentication state
+            dispatch(setAuthentication({
+                id: user_id,  // Use from response instead of decoded token
+                username: username,  // Use from response instead of decoded token
+                isAuthenticated: true,
+                isAdmin: decodedToken.isAdmin,
+            }));
 
-        const profileResponse = await axiosInstance.get("/users/user-profile/");
-        const username = profileResponse.data.username
-        console.log("username in login :",username)
+            // Navigate based on user role
+            if (decodedToken.isAdmin) {
+                navigate("/admin");
+            } else {
+                navigate("/user/home");
+            }
 
-        dispatch(
-            setAuthentication({
-                id:decodedToken.user_id,
-                username: username,
-                isAuthenticated:decodedToken.isAuthenticated,
-                isAdmin:decodedToken.isAdmin,
-            })
-        );
+            toast.success("Login Success");
+        }
+    } catch (error) {
+        handleLoginError(error);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
-        if(decodedToken.isAdmin){
-            navigate("/admin");
-        }else{
-            navigate("/user/home");
+// Error handling utility
+const handleLoginError = (error) => {
+    if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        if (errorData.email?.[0] === "Your account is blocked. Please contact support for assistance") {
+            toast.error(errorData.email[0]);
+            return;
         }
 
-        toast.success("Login Success");
-
-      }
+        // Handle other specific error messages
+        const errorMessage = 
+            errorData.message || 
+            errorData.email?.[0] || 
+            errorData.password?.[0] || 
+            "An error occurred during login";
+            
+        toast.error(errorMessage);
+    } else {
+        toast.error("An error occurred during login. Please try again");
     }
-    catch (error) {
-      console.log(error.response); // Log the full error response for debugging
-    
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.email &&
-        error.response.data.email[0] === "Your account is blocked. Please contact support for assistance"
-      ) {
-        toast.error(error.response.data.email[0]);  // Blocked account error message
-      }
-    
-      setErrors({
-        apiError: error.response?.data?.message || "An error occurred during login. Please try again"
-      });
-
-    }
-    
-    
-     finally {
-      setIsLoading(false);
-    }
-    
-  };
+};
 
   const isFormValid =
     formData.email &&
