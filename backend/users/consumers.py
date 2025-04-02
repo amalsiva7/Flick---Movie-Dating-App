@@ -6,42 +6,50 @@ from users.models import Notification
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user_id = self.scope['url_route']['kwargs']['user_id']
+        
+        # Check the user is authenticated and matches the requested user_id
+        if str(self.scope.get("user_id")) != self.user_id:
+            await self.close()
+            return
+        
+        if "error" in self.scope:
+            await self.close()
+            return
+
         self.group_name = f'user_{self.user_id}'
-
-        await self.channel_layer.group_add(self.group_name,self.channel_name)
-
-        print("Going to accep tthe ws connect")
-
+        
+        # Add user to group
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+        
         await self.accept()
 
-        print("Accepted ws connection")
-
-        # Send all previous notifications
+        # Send previous notifications securely
         await self.send_existing_notifications()
-        print("send all the previous notifications")
-
-        
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.group_name,self.channel_name)
-
+        # Remove user from group on disconnect
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
 
     async def send_notification(self, event):
         message = event['message']
-        
-        print("call reached send notification in Consumers")
 
-        # Send message to WebSocket
+        # Send sanitized notification data to WebSocket
         await self.send(text_data=json.dumps({
             'type': 'notification',
             'message': message
         }))
-        print(message,"messag send from consumer")
 
-    
     async def send_existing_notifications(self):
-        notifications = await sync_to_async(list)(Notification.objects.filter(
-            recipient_id = self.user_id).order_by('-created_at')[:10])
+        # Fetch previous notifications securely
+        notifications = await sync_to_async(list)(
+            Notification.objects.filter(recipient_id=self.user_id).order_by('-created_at')[:10]
+        )
         
         notifications_data = [
             {
@@ -53,9 +61,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             for notification in notifications
         ]
 
-        await self.send(text_data = json.dumps({
-            'type':'previous_notifications',
-            'notifications' :notifications_data
+        # Send sanitized previous notifications
+        await self.send(text_data=json.dumps({
+            'type': 'previous_notifications',
+            'notifications': notifications_data
         }))
 
 

@@ -2,6 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { CircleChevronLeft, CircleChevronRight, Heart, HeartOff, Send, X } from 'lucide-react';
 import axiosInstance from '../../../utils/axiosConfig';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux'; // Import useSelector
+
+const QuestionDisplay = ({ activeQuestion, handleAction, currentProfile }) => {
+  const [answerText, setAnswerText] = useState('');
+
+  const handleSendAnswer = () => {
+    if (answerText.trim()) {
+      // Call handleAction with the answer text
+      handleAction('flick_message', currentProfile.id, answerText);
+      // Clear the input field after sending
+      setAnswerText('');
+    }
+  };
+
+  return (
+    <div className="rounded-lg overflow-hidden">
+      {/* Question Header */}
+      <div className="bg-slate-800 text-white p-3">
+        <h3 className="font-medium">{activeQuestion ? activeQuestion.question_text : "So, what's on your mind?!!"}</h3>
+      </div>
+
+      {/* White content area with input and arrow button */}
+      <div className="bg-white p-3 flex justify-end">
+        <input  
+          type="text"
+          value={answerText}
+          onChange={(e) => setAnswerText(e.target.value)}
+          placeholder="Type your answer..."
+          className="flex-1 outline-none text-gray-700 mr-2"
+        />
+        <button
+          onClick={handleSendAnswer}
+          className="rounded-full bg-slate-800 p-1.5 flex items-center justify-center"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 6L15 12L9 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const DatingCard = () => {
   const [profiles, setProfiles] = useState([]);
@@ -9,18 +51,44 @@ const DatingCard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [activeQuestion, setActiveQuestion] = useState(null);
   const [paginationInfo, setPaginationInfo] = useState({
     totalPages: 1,
     hasNext: false,
     totalProfiles: 0
   });
 
+  const filters = useSelector((state) => state.filter);
+
   const fetchProfiles = async (page = 1) => {
+    console.log("fetchProfile got called")
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`users/potential-matches/?page=${page}`);
+
+      // Construct the query string based on the filters
+      let queryString = `users/potential-matches/?page=${page}`;
+      if (filters.ageMin) {
+        queryString += `&age_min=${filters.ageMin}`;
+        console.log("minimun age: ", filters.ageMin)
+      }
+      if (filters.ageMax) {
+        queryString += `&age_max=${filters.ageMax}`;
+      }
+      if (filters.matchMin) {
+        queryString += `&match_min=${filters.matchMin}`;
+      }
+      if (filters.matchMax) {
+        queryString += `&match_max=${filters.matchMax}`;
+      }
+      if (filters.location) {
+        queryString += `&location=${filters.location}`;
+      }
+
+      console.log("this is the queryString send while clicking filter: ",queryString)
+
+      const response = await axiosInstance.get(queryString);
       const data = response.data;
-      
+
       // Update pagination information
       setPaginationInfo({
         totalPages: data.total_pages,
@@ -34,7 +102,7 @@ const DatingCard = () => {
       } else {
         setProfiles(prevProfiles => [...prevProfiles, ...data.results]);
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profiles:', error);
@@ -43,20 +111,43 @@ const DatingCard = () => {
   };
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    const fetchActiveQuestion = async () => {
+      console.log("ActiveQuestion was called in dating card!!");
+  
+      const currentProfile = profiles[currentIndex];
+      console.log(currentProfile, "current profile was called in dating card activeQuestions");
+      if (!currentProfile) return;
+  
+      try {
+        const response = await axiosInstance.get(`users/questions/active/${currentProfile.id}/`);
+        setActiveQuestion(response.data);
+      } catch (error) {
+        console.error("Error fetching active question:", error);
+        setActiveQuestion(null); // Clear if no active question found
+      }
+    };
+  
+    fetchActiveQuestion();
+  }, [currentIndex, profiles]);
+  
+
+  useEffect(() => {
+    console.log("fetch profile called  due to change in filters")
+    fetchProfiles(); // Fetch profiles whenever the component mounts or filters change
+  }, [filters]);
 
   // Reset image index when changing profiles
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [currentIndex]);
 
-  const handleAction = async (action, userId) => {
+  const handleAction = async (action, userId, answerText = '') => {
 
     try {
       const response = await axiosInstance.post('users/card-action/', {
         target_user_id: userId,
-        action: action
+        action: action,
+        answer_text: answerText
       });
 
       console.log('clicked flick message in date card')
@@ -202,7 +293,6 @@ const DatingCard = () => {
           />
         </button>
       )}
-
       <div className="relative w-full h-full">
         {/* Bottom div (Peach color) */}
         <div className="absolute inset-0 shadow-md rounded-lg border p-4 bg-[#ffc6a4] rotate-6 h-full w-3/4 left-32"></div>
@@ -260,11 +350,13 @@ const DatingCard = () => {
                   </div>
                 )}
               </div>
-              <div className="flex gap-2">
-                <div className="text-lg font-medium italic">Match percent :</div>
-                  <div className="text-xl font-bold italic">
-                    {currentProfile.match_percentage} %
-                  </div>
+              <div className='flex flex-col space-y-1'>
+                <div className="text-lg font-medium italic">
+                  Age: <span className="text-xl font-bold">{currentProfile.age}</span>
+                </div>
+                <div className="text-lg font-medium italic">
+                  Match Percent: <span className="text-xl font-bold">{currentProfile.match_percentage}%</span>
+                </div>
               </div>
             </div>
   
@@ -289,17 +381,21 @@ const DatingCard = () => {
               >
                 <HeartOff className="text-red-400" size={24} />
               </button>
-  
-              <button
-                onClick={() => handleAction('flick_message', currentProfile.id)}
-                className="bg-slate-700 p-4 rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                <Send className="text-white" size={24} />
-              </button>
+
+              <div className="w-full mt-4">
+                <QuestionDisplay 
+                  activeQuestion={activeQuestion} 
+                  handleAction={handleAction} 
+                  currentProfile={currentProfile} 
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
+      {paginationInfo.hasNext && currentIndex === profiles.length -1 && (
+          <button onClick={() => fetchProfiles(currentPage + 1)} className="w-full bg-gray-800 text-white rounded-lg py-2 px-4 flex items-center justify-center space-x-2">Load More</button>
+      )}
     </div>
   );
 };

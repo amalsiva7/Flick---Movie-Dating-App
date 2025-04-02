@@ -164,6 +164,7 @@ class FlickQuestion(models.Model):
     question_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=True) #tablewise default question
     
     class Meta:
         ordering = ['-created_at']

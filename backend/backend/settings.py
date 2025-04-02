@@ -238,3 +238,7 @@ FILE_UPLOAD_HANDLERS = [
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
+
+
+STRIPE_TEST_PUBLIC_KEY = ''
+STRIPE_TEST_SECRET_KEY = ''

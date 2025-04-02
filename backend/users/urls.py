@@ -24,4 +24,5 @@ urlpatterns = [
     path('notifications/<int:user_id>/mark-as-read/', MarkNotificationsAsRead.as_view(), name='mark-notifications-read'),
 
     path('flick-questions/', FlickQuestionView.as_view(), name='flick-questions'),
+    path('questions/active/<int:user_id>/',ActiveQuestionView.as_view(),name='questions')
 ]

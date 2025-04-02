@@ -46,8 +46,6 @@ class UserList(APIView):
 
             serializer = UserListSerializer(result_page,many =True)
 
-            print(result_page)
-            print(serializer.data,"********SERIALIZER DATA***************")
 
             return pagination.get_paginated_response(serializer.data)
         except Users.DoesNotExist:
@@ -61,6 +59,7 @@ class UserList(APIView):
             )
         
 class UserAccountStatus(APIView):
+    permission_classes=[IsSuperUser]
 
     def post(self,request,user_id):
 
@@ -92,3 +91,21 @@ class UserAccountStatus(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+
+class SubscriptionListCreateView(APIView):
+    permission_classes=[IsSuperUser]
+
+    def get(self, request):
+        plans = SubscriptionPlan.objects.filter(is_active=True)
+        serializer = SubscriptionPlanSerializer(plans, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    def post(self, request):
+        serializer = SubscriptionPlanSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
