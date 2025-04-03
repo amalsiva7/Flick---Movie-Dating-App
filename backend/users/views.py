@@ -577,20 +577,29 @@ class ActionView(APIView):
                 notification_type='flick',
                 title='New Flick Received',
                 message=f'{request.user.username} sent you a flick!'
-            )
+            ) 
+
+            notification_data = {
+                'id': notification.id,
+                'message': notification.message,
+                'read': False,  # New notification is unread
+                'timestamp': notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
 
             async_to_sync(channel_layer.group_send)(
                 f"user_{target_user.id}",
                 {
                     'type': 'send_notification',
-                    'message': {
-                        'id': notification.id,
-                        'notification_type': notification.notification_type,
-                        'title': notification.title,
-                        'message': notification.message
-                    }
+                    'message': notification_data
+                    # {
+                    #     'id': notification.id,
+                    #     'notification_type': notification.notification_type,
+                    #     'title': notification.title,
+                    #     'message': notification.message
+                    # }
                 }
             )
+
 
             mutual_interest = ActionHistory.objects.filter(
                 user_id=target_user,
@@ -598,16 +607,43 @@ class ActionView(APIView):
                 action='flick_message'
             ).exists()
 
+            # if mutual_interest:
+            #     match = Match.objects.create(user1=request.user, user2=target_user)
+                
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"user_{request.user.id}",
+            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+            #     )
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"user_{target_user.id}",
+            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+            #     )
+
             if mutual_interest:
                 match = Match.objects.create(user1=request.user, user2=target_user)
                 
+                # For match notifications, properly format as the frontend expects
+                match_notification_user = {
+                    'id': f'match-{match.id}-user',
+                    'message': "It's a match!",
+                    'read': False,
+                    'timestamp': match.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                
+                match_notification_target = {
+                    'id': f'match-{match.id}-target',
+                    'message': "It's a match!",
+                    'read': False,
+                    'timestamp': match.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                
                 async_to_sync(channel_layer.group_send)(
                     f"user_{request.user.id}",
-                    {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+                    {'type': 'send_notification', 'message': match_notification_user}
                 )
                 async_to_sync(channel_layer.group_send)(
                     f"user_{target_user.id}",
-                    {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+                    {'type': 'send_notification', 'message': match_notification_target}
                 )
 
                 return Response({"message": "It's a match!", "matched": True})

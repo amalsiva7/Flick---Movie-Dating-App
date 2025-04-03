@@ -8,13 +8,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         self.user_id = self.scope['url_route']['kwargs']['user_id']
         
         # Check the user is authenticated and matches the requested user_id
-        if str(self.scope.get("user_id")) != self.user_id:
+        if str(self.scope.get("user_id")) != self.user_id or "error" in self.scope:
             await self.close()
             return
         
-        if "error" in self.scope:
-            await self.close()
-            return
 
         self.group_name = f'user_{self.user_id}'
         
