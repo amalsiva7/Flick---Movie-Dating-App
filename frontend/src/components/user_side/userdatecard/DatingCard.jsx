@@ -19,7 +19,7 @@ const QuestionDisplay = ({ activeQuestion, handleAction, currentProfile }) => {
   return (
     <div className="rounded-lg overflow-hidden">
       {/* Question Header */}
-      <div className="bg-slate-800 text-white p-3">
+      <div className="bg-slate-900 text-white p-3">
         <h3 className="font-medium">{activeQuestion ? activeQuestion.question_text : "So, what's on your mind?!!"}</h3>
       </div>
 
@@ -150,7 +150,7 @@ const DatingCard = () => {
         answer_text: answerText
       });
 
-      console.log('clicked flick message in date card')
+      console.log('clicked flick message in date card',answerText)
       
       if (response.data.matched) {
         const currentProfile = profiles[currentIndex]
@@ -374,22 +374,23 @@ const DatingCard = () => {
               </div>
             </div>
   
-            <div className="flex justify-between mt-4">
+            <div className="flex justify-between items-center mt-4">
               <button
                 onClick={() => handleAction('reject', currentProfile.id)}
-                className="bg-slate-700 p-4 rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                <HeartOff className="text-red-400" size={24} />
+                className="bg-slate-900 p-4 h-24 w-24 rounded-lg hover:bg-slate-950 transition-colors flex justify-center items-center mt-2">
+
+                <HeartOff className="text-red-500" size={34} />
               </button>
 
-              <div className="w-full mt-4">
+              <div className="w-4/5 mt-4 ml-2"> {/* Added ml-2 for margin-left */}
                 <QuestionDisplay 
                   activeQuestion={activeQuestion} 
                   handleAction={handleAction} 
                   currentProfile={currentProfile} 
-                />
+                />  
               </div>
             </div>
+
           </div>
         </div>
       </div>

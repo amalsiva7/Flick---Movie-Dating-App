@@ -549,6 +549,7 @@ class ActionView(APIView):
     def post(self, request):
         target_user_id = request.data.get('target_user_id')
         user_action = request.data.get('action')
+        user_answer = request.data.get('')
 
         if not target_user_id:
             return Response({"error": "target_user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
