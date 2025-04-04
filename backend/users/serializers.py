@@ -216,16 +216,3 @@ class FlickQuestionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         return FlickQuestion.objects.create(**validated_data)
-
-
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubscriptionPlan
-        fields = '__all__'
-
-class UserSubscriptionSerializer(serializers.ModelSerializer):
-    plan = SubscriptionPlanSerializer(read_only=True)
-    class Meta:
-        model = UserSubscription
-        fields = '__all__'
-        read_only_fields = ('user', 'start_date', 'end_date', 'is_active')
