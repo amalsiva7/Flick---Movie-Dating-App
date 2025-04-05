@@ -1,14 +1,14 @@
 # api/serializers.py
 from rest_framework import serializers
-from .models import SubscriptionPlan, UserSubscription
+from .models import SubscriptionPlan
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
-        fields = '__all__'
-        read_only_fields = ('created_at',)
+        fields = ['id', 'name', 'price', 'description', 'duration', 'is_active', 'is_paused', 'created_at']
 
-class UserSubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserSubscription
-        fields = '__all__'
+
+# class UserSubscriptionSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = UserSubscription
+#         fields = '__all__'

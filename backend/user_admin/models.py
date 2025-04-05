@@ -28,7 +28,7 @@ class SubscriptionPlan(models.Model):
     def clean(self):
         # Ensure maximum 3 active plans
         if self.is_active and not self.pk:
-            active_count = SubscriptionPlan.objects.filter(is_active=True).count()
+            active_count = SubscriptionPlan.objects.filter(is_active=True, is_paused=False).count()
             if active_count >= 3:
                 raise ValidationError("Cannot have more than 3 active plans")
     
