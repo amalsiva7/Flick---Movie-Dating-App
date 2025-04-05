@@ -4,10 +4,13 @@ import PieChartCard from "./PieChartCard"
 import WeeklyChart from "./WeeklyChart"
 import { Users, CreditCard, PlayCircle, DollarSign, Loader2 } from "lucide-react"
 import axiosInstance from "../../utils/axiosConfig"
+import { useNavigate } from 'react-router-dom';
+
 
 const SubscriptionDashboard = () => {
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true)
+    const [stats, setStats] = useState({
     totalPlans: 0,
     totalSubscribers: 0,
     ongoingPlans: 0,
@@ -69,7 +72,11 @@ const SubscriptionDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Subscription Plans" value={stats.totalPlans} icon={<CreditCard className="h-8 w-8" />} />
+        <StatCard title="Subscription Plans"
+         value={stats.totalPlans} 
+         icon={<CreditCard className="h-8 w-8" />}
+         onClick={()=> navigate('/admin/subscription-plan-list')} />
+         
         <StatCard title="Total Subscribers" value={stats.totalSubscribers} icon={<Users className="h-8 w-8" />} />
         <StatCard title="Ongoing Plans" value={stats.ongoingPlans} icon={<PlayCircle className="h-8 w-8" />} />
         <StatCard

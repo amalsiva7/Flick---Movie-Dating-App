@@ -23,7 +23,7 @@ urlpatterns = [
     path('subscription-plans/<int:pk>/reactivate/', SubscriptionPlanViewSet.as_view({'post': 'reactivate_plan'}), name='reactivate-subscription-plan'),
 
 
-    path('subscription-stats/', SubscriptionStatsAPI.as_view(), name='subscription-stats'),
+    path('subscription-stats/', SubscriptionStatsAPI.as_view({'get':'list'}), name='subscription-stats'),
 
 
 

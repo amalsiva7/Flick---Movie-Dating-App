@@ -6,6 +6,7 @@ import AdminDashBoard from "../admin_side/AdminDashBoard";
 import AdminUserList from "../admin_side/AdminUserList";
 import AdminSubscriptions from "../admin_side/AdminSubscriptions";
 import AdminEmployees from "../admin_side/AdminEmployees";
+import AdminSubscriptionsPlanList from "../admin_side/AdminSubscriptionsPlanList";
 
 
 const AdminWrappper = () =>{
@@ -32,6 +33,11 @@ const AdminWrappper = () =>{
                 {path:"/subscriptions",element:(
                     <AdminPrivateRoute>
                         <AdminSubscriptions/>
+                    </AdminPrivateRoute>
+                )},
+                {path:"/subscription-plan-list",element:(
+                    <AdminPrivateRoute>
+                        <AdminSubscriptionsPlanList/>
                     </AdminPrivateRoute>
                 )},
                 {path:"/employees",element:(
