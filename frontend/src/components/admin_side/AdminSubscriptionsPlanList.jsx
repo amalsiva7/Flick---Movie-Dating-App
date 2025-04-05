@@ -3,8 +3,8 @@
 import React, { useState, useEffect, Fragment } from "react";
 import axiosInstance from "../../utils/axiosConfig";
 import { toast } from "react-hot-toast";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Dialog, Transition } from "@headlessui/react";
+import { PlusIcon, EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { Dialog, Transition, Menu } from "@headlessui/react";
 
 const AdminSubscriptionsPlanList = () => {
   const [plans, setPlans] = useState([]);
@@ -19,63 +19,114 @@ const AdminSubscriptionsPlanList = () => {
     duration: "",
   });
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        const response = await axiosInstance.get("user-admin/subscription-plans/");
-        setPlans(response.data);
-        setLoading(false);
+  const sortPlans = (plansArray) => {
+    return plansArray.sort((a, b) => {
+      const getRank = (p) => {
+        if (p.is_active && !p.is_paused) return 0; // Active
+        if (p.is_active && p.is_paused) return 1;  // Paused
+        return 2;                                  // Inactive
+      };
+      return getRank(a) - getRank(b);
+    });
+  };
 
-        const activeCount = response.data.filter(
-          (plan) => plan.is_active && !plan.is_paused
-        ).length;
-        setActivePlanCount(activeCount);
-      } catch (error) {
-        console.error("Error fetching subscription plans:", error);
-        toast.error("Failed to load subscription plans");
-        setLoading(false);
-      }
-    };
-
-    fetchPlans();
-  }, []);
-
-  const handlePauseResume = async (planId, isPaused) => {
+  const fetchPlans = async () => {
     try {
-      const endpoint = isPaused
-        ? `user-admin/subscription-plans/${planId}/unpause/`
-        : `user-admin/subscription-plans/${planId}/pause/`;
-      await axiosInstance.post(endpoint);
-
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan.id === planId ? { ...plan, is_paused: !isPaused } : plan
-        )
-      );
-      setActivePlanCount((prevCount) => (isPaused ? prevCount + 1 : prevCount - 1));
-      toast.success(`Subscription plan ${isPaused ? "resumed" : "paused"}`);
+      const response = await axiosInstance.get("user-admin/subscription-plans/");
+      const sortedPlans = sortPlans(response.data);
+      setPlans(sortedPlans);
+      const activeCount = sortedPlans.filter(
+        (plan) => plan.is_active && !plan.is_paused
+      ).length;
+      setActivePlanCount(activeCount);
+      setLoading(false);
     } catch (error) {
-      console.error("Error pausing/resuming plan:", error);
-      toast.error("Failed to update subscription plan status");
+      console.error("Error fetching plans", error);
+      toast.error("Failed to load subscription plans");
+      setLoading(false);
     }
   };
 
-  const handleActivateDeactivate = async (planId, isActive) => {
-    try {
-      const endpoint = isActive
-        ? `user-admin/subscription-plans/${planId}/deactivate/`
-        : `user-admin/subscription-plans/${planId}/reactivate/`;
-      await axiosInstance.post(endpoint);
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan.id === planId ? { ...plan, is_active: !isActive } : plan
-        )
-      );
-      toast.success(`Subscription plan ${isActive ? "deactivated" : "activated"}`);
+  const refreshPlans = async () => {
+    try {
+      const response = await axiosInstance.get("user-admin/subscription-plans/");
+      const sortedPlans = sortPlans(response.data);
+      setPlans(sortedPlans);
+      const activeCount = sortedPlans.filter(
+        (plan) => plan.is_active && !plan.is_paused
+      ).length;
+      setActivePlanCount(activeCount);
     } catch (error) {
-      console.error("Error activating/deactivating plan:", error);
-      toast.error("Failed to update subscription plan status");
+      toast.error("Failed to refresh plans");
+    }
+  };
+
+  const handleAction = async (plan) => {
+    const { id, is_paused, is_active } = plan;
+
+    if (!is_paused && is_active) {
+      return; // Open dropdown (handled below)
+    }
+
+    if (is_paused && is_active) {
+      if (activePlanCount >= 3) {
+        toast.error("Cannot activate more than 3 active plans.");
+        return;
+      }
+      try {
+        await axiosInstance.post(`user-admin/subscription-plans/${id}/unpause/`);
+        toast.success("Plan resumed successfully");
+        refreshPlans();
+      } catch (err) {
+        toast.error("Error resuming plan");
+      }
+    } else if (!is_active) {
+      if (activePlanCount >= 3) {
+        toast.error("Cannot activate. 3 plans are already active.");
+        return;
+      }
+      try {
+        await axiosInstance.post(`user-admin/subscription-plans/${id}/reactivate/`);
+        toast.success("Plan activated");
+        refreshPlans();
+      } catch (err) {
+        toast.error("Error activating plan");
+      }
+    }
+  };
+
+  const handleDropdownAction = async (plan, action) => {
+    const { id } = plan;
+
+    try {
+      if (action === "pause") {
+        await axiosInstance.post(`user-admin/subscription-plans/${id}/pause/`);
+        toast.success("Plan paused");
+      } else if (action === "deactivate") {
+        await axiosInstance.post(`user-admin/subscription-plans/${id}/pause/`);
+        await axiosInstance.post(`user-admin/subscription-plans/${id}/deactivate/`);
+        toast.success("Plan paused & deactivated");
+      }
+      refreshPlans();
+    } catch {
+      toast.error("Error updating plan");
+    }
+  };
+
+  const handleCreatePlan = async () => {
+    try {
+      await axiosInstance.post("user-admin/subscription-plans/", newPlan);
+      toast.success("Plan created successfully");
+      closeCreateModal();
+      refreshPlans();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || "Failed to create subscription plan"
+      );
     }
   };
 
@@ -83,203 +134,213 @@ const AdminSubscriptionsPlanList = () => {
     setNewPlan({ ...newPlan, [e.target.name]: e.target.value });
   };
 
-  const handleCreatePlan = async () => {
-    try {
-      const response = await axiosInstance.post("user-admin/subscription-plans/", newPlan);
-      setPlans((prevPlans) => [...prevPlans, response.data]);
-      setActivePlanCount((prevCount) => prevCount + 1);
-      toast.success("Subscription plan created successfully");
+  const openCreateModal = () => setIsCreateModalOpen(true);
+  const closeCreateModal = () => setIsCreateModalOpen(false);
 
-      closeCreateModal();
-    } catch (error) {
-      console.error("Error creating subscription plan:", error);
-      toast.error(error.response?.data?.error || "Failed to create subscription plan");
-    }
-  };
-
-  function openCreateModal() {
-    setIsCreateModalOpen(true);
-  }
-  function closeCreateModal() {
-    setIsCreateModalOpen(false);
-  }
-
-  if (loading) {
-    return <div>Loading subscription plans...</div>;
-  }
+  if (loading) return <div>Loading subscription plans...</div>;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Subscription Plans</h1>
-        <button
-          className={`flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed`}
-          onClick={openCreateModal}
-          disabled={activePlanCount >= 3}
-        >
-          <PlusIcon className="h-5 w-5 mr-2" aria-hidden="true" />
-          Create Plan
-        </button>
-      </div>
-
-      {/* Create Plan Modal */}
-      <Transition appear show={isCreateModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeCreateModal}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+    <div className="h-full bg-white shadow-md rounded-lg">
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Subscription Plans</h1>
+          <button
+            disabled={activePlanCount >= 3}
+            className="flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-gray-400"
+            onClick={openCreateModal}
           >
-            <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create Plan
+          </button>
+        </div>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    Create New Subscription Plan
-                  </Dialog.Title>
-                  <div className="mt-2">
-                    <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-                      <div className="sm:col-span-3">
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-900">
-                          Plan Name
-                        </label>
-                        <input
-                          type="text"
-                          name="name"
-                          id="name"
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
+        {/* Plan Cards */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className="rounded-xl border bg-white p-6 shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">{plan.name}</h2>
+                  {plan.is_active && !plan.is_paused && (
+                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  )}
+                  {plan.is_active && plan.is_paused && (
+                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      Paused
+                    </span>
+                  )}
+                  {!plan.is_active && (
+                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                      Inactive
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-700 text-sm mt-1">
+                  <strong>Price:</strong> ₹{plan.price}
+                </p>
+                <p className="text-gray-700 text-sm">
+                  <strong>Description:</strong> {plan.description}
+                </p>
+                <p className="text-gray-700 text-sm">
+                  <strong>Duration:</strong>{" "}
+                  {
+                    {
+                      "3M": "3 Months",
+                      "6M": "6 Months",
+                      "1Y": "1 Year",
+                    }[plan.duration]
+                  }
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                    <strong>Created:</strong>{" "}
+                    {(() => {
+                        const date = new Date(plan.created_at);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        return `${day}/${month}/${year}`;
+                    })()}
+                </p>
 
-                      <div className="sm:col-span-3">
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-900">
-                          Price
-                        </label>
-                        <input
-                          type="number"
-                          name="price"
-                          id="price"
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
+              </div>
 
-                      <div className="sm:col-span-6">
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-900">
-                          Description
-                        </label>
-                        <textarea
-                          name="description"
-                          id="description"
-                          rows="3"
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <label htmlFor="duration" className="block text-sm font-medium text-gray-900">
-                            Duration
-                        </label>
-                            <select
-                                name="duration"
-                                id="duration"
-                                onChange={handleInputChange}
-                                value={newPlan.duration}
-                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              <div className="mt-4">
+                {(plan.is_active && !plan.is_paused) ? (
+                  <Menu as="div" className="relative inline-block text-left">
+                    <Menu.Button className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                      Actions
+                      <EllipsisVerticalIcon className="ml-2 h-5 w-5" />
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                      <div className="py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => handleDropdownAction(plan, "pause")}
+                              className={`${
+                                active ? "bg-gray-100" : ""
+                              } w-full text-left px-4 py-2 text-sm text-gray-700`}
                             >
-                                <option value="">Select duration</option>
-                                <option value="3M">3 Months</option>
-                                <option value="6M">6 Months</option>
-                                <option value="1Y">1 Year</option>
-                            </select>
-                    </div>
+                              Pause
+                            </button>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => handleDropdownAction(plan, "deactivate")}
+                              className={`${
+                                active ? "bg-gray-100" : ""
+                              } w-full text-left px-4 py-2 text-sm text-gray-700`}
+                            >
+                              Pause & Deactivate
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+                    </Menu.Items>
+                  </Menu>
+                ) : (
+                  <button
+                    className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    onClick={() => handleAction(plan)}
+                  >
+                    {plan.is_active && plan.is_paused ? "Resume" : "Activate"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
 
-                    </div>
-                  </div>
+        {/* Create Plan Modal */}
+        <Transition appear show={isCreateModalOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={closeCreateModal}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/25" />
+            </Transition.Child>
 
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={handleCreatePlan}
-                      className="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Create
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+                      Create New Subscription Plan
+                    </Dialog.Title>
+                    <div className="mt-2 grid grid-cols-1 gap-4">
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Plan Name"
+                        onChange={handleInputChange}
+                        className="border rounded p-2"
+                      />
+                      <input
+                        type="number"
+                        name="price"
+                        placeholder="Price"
+                        onChange={handleInputChange}
+                        className="border rounded p-2"
+                      />
+                      <textarea
+                        name="description"
+                        placeholder="Description"
+                        rows="3"
+                        onChange={handleInputChange}
+                        className="border rounded p-2"
+                      />
+                      <select
+                        name="duration"
+                        onChange={handleInputChange}
+                        value={newPlan.duration}
+                        className="border rounded p-2"
+                      >
+                        <option value="">Select Duration</option>
+                        <option value="3M">3 Months</option>
+                        <option value="6M">6 Months</option>
+                        <option value="1Y">1 Year</option>
+                      </select>
+                    </div>
 
-      {/* Plans Display */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-between"
-          >
-            <div>
-              <h2 className="text-xl font-semibold mb-2">{plan.name}</h2>
-              <p className="text-sm text-gray-700 mb-1">
-                <strong>Price:</strong> ${plan.price}
-              </p>
-              <p className="text-sm text-gray-700 mb-1">
-                <strong>Description:</strong> {plan.description}
-              </p>
-              <p className="text-sm text-gray-700 mb-1">
-                <strong>Duration:</strong> {plan.duration} days
-              </p>
-              <p className="text-sm text-gray-500">
-                <strong>Created At:</strong>{" "}
-                {new Date(plan.created_at).toLocaleDateString()}
-              </p>
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={handleCreatePlan}
+                        className="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500"
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-            <div className="mt-4 flex gap-2 flex-wrap">
-              <button
-                onClick={() => handlePauseResume(plan.id, plan.is_paused)}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
-                  plan.is_paused
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : "bg-yellow-500 hover:bg-yellow-600 text-white"
-                }`}
-              >
-                {plan.is_paused ? "Resume" : "Pause"}
-              </button>
-              <button
-                onClick={() => handleActivateDeactivate(plan.id, plan.is_active)}
-                className={`px-3 py-1 text-sm font-medium rounded-md ${
-                  plan.is_active
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-              >
-                {plan.is_active ? "Deactivate" : "Activate"}
-              </button>
-            </div>
-          </div>
-        ))}
+          </Dialog>
+        </Transition>
       </div>
     </div>
   );

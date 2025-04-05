@@ -78,7 +78,9 @@ const SubscriptionDashboard = () => {
          onClick={()=> navigate('/admin/subscription-plan-list')} />
          
         <StatCard title="Total Subscribers" value={stats.totalSubscribers} icon={<Users className="h-8 w-8" />} />
+
         <StatCard title="Ongoing Plans" value={stats.ongoingPlans} icon={<PlayCircle className="h-8 w-8" />} />
+        
         <StatCard
           title="Total Revenue"
           value={`$${stats.totalRevenue.toLocaleString()}`}

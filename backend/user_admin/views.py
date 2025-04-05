@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from users.serializers import *
 from .serializers import *
 from .models import *
+from django.db.models import Q
 
 
 # Create your views here.
@@ -177,7 +178,10 @@ class SubscriptionStatsAPI(viewsets.ViewSet):
     def list(self, request):
         # Get basic stats
         total_plans = SubscriptionPlan.objects.count()
-        active_plans = SubscriptionPlan.objects.filter(is_active=True, is_paused=False).count()
+        active_plans = SubscriptionPlan.objects.filter(is_active=True).count()
+
+
+        print("*************ACTIVE PLANS***************",active_plans)
         
 
         return Response({
