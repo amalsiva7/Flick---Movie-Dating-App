@@ -4,6 +4,8 @@ from django.contrib.auth.hashers import make_password,check_password
 from django.contrib.auth import authenticate
 from datetime import datetime
 from .utils import *
+from user_admin.models import *
+
 
 
 ##User 
@@ -216,3 +218,12 @@ class FlickQuestionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         return FlickQuestion.objects.create(**validated_data)
+
+
+class UserSubscriptionPlanSerializer(serializers.ModelSerializer):
+    duration = serializers.CharField(source='get_duration_display')
+    
+    class Meta:
+        model = SubscriptionPlan
+        fields = ['name', 'price', 'description', 'duration']
+

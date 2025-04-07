@@ -15,6 +15,7 @@ import MagicLink from '../user_side/auth/MagicLink';
 import UserProfile from '../user_side/userProfile/UserProfile';
 import UserCard from '../user_side/userhomepage/UserCard';
 import UserFlickPage from '../user_side/userhomepage/UserFlickPage';
+import UserSubscription from '../user_side/usersubscription/UserSubscription';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -115,7 +116,7 @@ const UserWrapper = () => {
           path: "subscription",
           element: (
             <PrivateRoutes>
-              {/* Add your Subscription component */}
+              <UserSubscription/>
             </PrivateRoutes>
           )
         },

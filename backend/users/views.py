@@ -27,6 +27,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.shortcuts import redirect
 from django.urls import reverse
+from rest_framework import viewsets
+from user_admin.serializers import *
 
 # Create your views here.
 
@@ -747,6 +749,25 @@ class FlickAnswerView(APIView):
         answer = FlickAnswer
 
 
+
+class SubscriptionListView(viewsets.ViewSet):
+
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        plans = SubscriptionPlan.objects.filter(is_active = True, is_paused = False)
+        serializer = UserSubscriptionPlanSerializer(plans, many = True)
+
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+
+    
+
+
+
+
+
+
 # class CreateStripeCheckoutSessionView(APIView):
 #     permission_classes = [IsAuthenticated]
 
@@ -858,4 +879,5 @@ class FlickAnswerView(APIView):
 #         user_subscription.plan = plan
 #         user_subscription.stripe_subscription_id = stripe_subscription_id
 #         user_subscription.end_date
+
 
