@@ -71,6 +71,7 @@ INSTALLED_APPS = [
 
     'users',
     'user_admin',
+    'dm_chat',
 
     'rest_framework',
     'corsheaders',
