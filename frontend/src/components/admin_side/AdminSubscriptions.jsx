@@ -5,6 +5,7 @@ import WeeklyChart from "./WeeklyChart"
 import { Users, CreditCard, PlayCircle, DollarSign, Loader2 } from "lucide-react"
 import axiosInstance from "../../utils/axiosConfig"
 import { useNavigate } from 'react-router-dom';
+import HeartLoader from "../loader/HeartLoader"
 
 
 const SubscriptionDashboard = () => {
@@ -27,6 +28,7 @@ const SubscriptionDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const statsResponse = await axiosInstance.get('user-admin/subscription-stats/');
 
@@ -64,6 +66,11 @@ const SubscriptionDashboard = () => {
     fetchData()
   }, [])
 
+  if (loading) {
+    return (<div className="relative bg-white shadow-md rounded-lg border p-4 h-full w-3/4 left-32 flex justify-center items-center">
+        <HeartLoader/>
+      </div>)
+}
 
   return (
     <div className="h-full bg-white relative shadow-md rounded-lg ">
