@@ -63,10 +63,61 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         }))
 
 
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import sync_to_async
+from users.models import FlickAnswer, UserImage
+
+class AnswerConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+
+        user = self.scope.get('user')
+        if user is None or user.is_anonymous:
+            await self.close()
+            return
+        
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+
+        if str(user.id) != self.user_id:
+            await self.close()
+            return
+        
+        self.group_name = f'answers_{self.user_id}'
+
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+
+    async def send_answer(self, event):
+        answer_data = event['answer_data']
+        await self.send(text_data=json.dumps({
+            'type': 'new_answer',
+            'answer': answer_data,
+        }))
+
+
 
 class FlickConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        user = self.scope.get('user')
+        if user is None or user.is_anonymous:
+            await self.close()
+            return
+
         self.user_id = self.scope['url_route']['kwargs']['user_id']
+
+        if str(user.id) != self.user_id:
+            await self.close()
+            return
+
         self.group_name = f'flick_{self.user_id}'
 
         await self.channel_layer.group_add(
@@ -75,20 +126,17 @@ class FlickConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-        print("Accepting flick connection ")
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
         )
-        print("Disconnect flick conncection")
 
     async def send_flick_message(self, event):
         flick_data = event['flick_data']
 
         await self.send(text_data=json.dumps({
             'type': 'flick_message',
-            'flick_data': flick_data
+            'data': flick_data
         }))
-        print(flick_data, "flick_data send from consumer")

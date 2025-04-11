@@ -29,6 +29,8 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from rest_framework import viewsets
 from user_admin.serializers import *
+from django.utils.timezone import localtime
+
 
 # Create your views here.
 
@@ -543,15 +545,19 @@ class PotentialMatchesView(ListAPIView):
             return paginator.get_paginated_response(serializer.data)
         else:
             return Response({"message": "No more profiles available"}, status=status.HTTP_404_NOT_FOUND)
+        
+
 
 class ActionView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 
     def post(self, request):
+
+        print("ACtionView got Called")
         target_user_id = request.data.get('target_user_id')
         user_action = request.data.get('action')
-        user_answer = request.data.get('')
+        user_answer = request.data.get('answer_text')
 
         if not target_user_id:
             return Response({"error": "target_user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -564,6 +570,58 @@ class ActionView(APIView):
         except Users.DoesNotExist:
             return Response({"error": "Target user not found"}, status=status.HTTP_404_NOT_FOUND)
         
+
+        if user_action == 'flick_message':
+
+            
+            # Get the active question for the target user
+            try:
+                active_question = FlickQuestion.objects.filter(
+                    user=target_user,
+                    is_active=True
+                ).latest('created_at')
+                
+                # Create the answer
+                FlickAnswer.objects.create(
+                    question=active_question,
+                    responder=request.user,
+                    answer_text=user_answer
+                )
+
+                answer = FlickAnswer.objects.get(question=active_question, responder=request.user, answer_text=user_answer)
+                user_images = UserImage.objects.filter(user=request.user).first()
+
+                answer_data = {
+                    'id': answer.id,
+                    'answer_text': answer.answer_text,
+                    'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'responder': {
+                        'id': request.user.id,
+                        'username': request.user.username,
+                        'profile_image': user_images.image1.url if user_images and user_images.image1 else None,
+                        'profile_url': f"/profile/{request.user.id}/"
+                    }
+                }
+
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"answers_{target_user.id}",
+                    {
+                        'type': 'send_answer',
+                        'answer_data': answer_data
+                    }
+                )
+
+
+
+
+
+                print("Answer in ActionView along wth Question",active_question.question_text,'-->',user_answer)
+                
+            except FlickQuestion.DoesNotExist:
+                return Response({"error": "No active question found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create action history
         action_record, created = ActionHistory.objects.update_or_create(
             user=request.user,
             target_user=target_user,
@@ -594,26 +652,40 @@ class ActionView(APIView):
                 }
             )
 
+             # Send through Flick channel
+            async_to_sync(channel_layer.group_send)(
+                f"flick_{target_user.id}",
+                {
+                    'type': 'send_flick_message',
+                    'flick_data': {
+                        'sender': request.user.username,
+                        'question': active_question.question_text,
+                        'answer': user_answer,
+                        'timestamp': str(notification.created_at)
+                    }
+                }
+            )
 
-            mutual_interest = ActionHistory.objects.filter(
-                user_id=target_user,
-                target_user=request.user,
-                action='flick_message'
-            ).exists()
 
-            if mutual_interest:
-                match = Match.objects.create(user1=request.user, user2=target_user)
+            # mutual_interest = ActionHistory.objects.filter(
+            #     user_id=target_user,
+            #     target_user=request.user,
+            #     action='flick_message'
+            # ).exists()
+
+            # if mutual_interest:
+            #     match = Match.objects.create(user1=request.user, user2=target_user)
                 
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{request.user.id}",
-                    {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
-                )
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{target_user.id}",
-                    {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
-                )
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"user_{request.user.id}",
+            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+            #     )
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"user_{target_user.id}",
+            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
+            #     )
 
-                return Response({"message": "It's a match!", "matched": True})
+            #     return Response({"message": "It's a match!", "matched": True})
 
         return self.get_next_profile(request)
     
@@ -666,7 +738,30 @@ class FlickQuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        questions = FlickQuestion.objects.filter(user=request.user)[:10]
+        # Get the active question for the user (default or custom)
+        active_question = FlickQuestion.objects.filter(user=request.user, is_active=True).first()
+        
+        # If no active question, fall back to the default
+        if not active_question:
+            default_question = FlickQuestion.objects.filter(user=request.user, is_default=True).first()
+            
+            # If somehow user doesn't have a default question, create one
+            if not default_question:
+                default_question = FlickQuestion.objects.create(
+                    user=request.user,
+                    question_text="So, what's on your mind?!!",
+                    is_active=True,
+                    is_default=True
+                )
+            else:
+                # Ensure the default is active if no other active questions
+                default_question.is_active = True
+                default_question.save()
+                
+            active_question = default_question
+            
+        # Get the 10 most recent questions including the active one
+        questions = FlickQuestion.objects.filter(user=request.user).order_by('-created_at')[:10]
         serializer = FlickQuestionSerializer(questions, many=True)
         return Response(serializer.data)
 
@@ -739,14 +834,42 @@ class ActiveQuestionView(APIView):
 
 
 
-class FlickAnswerView(APIView):
+class UserAnswerListView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request,user_id):
+    def get(self, request, user_id):
+        try:
+            # Get all questions asked by the user
+            questions = FlickQuestion.objects.filter(user_id=user_id)
 
-        print('Flick Answer is  called in view')
+            answer_data = []
+            for question in questions:
+                answers = FlickAnswer.objects.filter(question=question).select_related('responder__profile', 'responder__images')
 
-        answer = FlickAnswer
+                for answer in answers:
+                    user_images = UserImage.objects.filter(user=answer.responder).first()
+                    answer_data.append({
+                        'id': answer.id,
+                        'answer_text': answer.answer_text,
+                        'created_at': localtime(answer.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                        'question_text':question.question_text,
+                        'responder': {
+                            'id': answer.responder.id,
+                            'username': answer.responder.username,
+                            'profile_image': request.build_absolute_uri(user_images.image1.url) if user_images and user_images.image1 else None,
+                            'profile_url': f"/profile/{answer.responder.id}/"
+                        }
+                    })
+
+                    for ans in answer_data:
+                        print(f"{ans['responder']['username']} answered: \"{ans['answer_text']}\" at {ans['created_at']}")
+
+
+            return Response(answer_data)
+
+        except FlickQuestion.DoesNotExist:
+            return Response({"error": "Invalid user"}, status=404)
+
 
 
 
@@ -760,9 +883,6 @@ class SubscriptionListView(viewsets.ViewSet):
 
         return Response(serializer.data,status=status.HTTP_200_OK)
     
-
-    
-
 
 
 

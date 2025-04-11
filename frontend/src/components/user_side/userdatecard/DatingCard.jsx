@@ -4,6 +4,7 @@ import axiosInstance from '../../../utils/axiosConfig';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux'; // Import useSelector
 
+
 const QuestionDisplay = ({ activeQuestion, handleAction, currentProfile }) => {
   const [answerText, setAnswerText] = useState('');
 
@@ -140,6 +141,8 @@ const DatingCard = () => {
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [currentIndex]);
+
+  
 
   const handleAction = async (action, userId, answerText = '') => {
 

@@ -28,4 +28,8 @@ urlpatterns = [
 
 
     path('subscription-list/', SubscriptionListView.as_view({'get':'list'}), name='subscription-list'),
+
+    path('answers/<int:user_id>/', UserAnswerListView.as_view(), name='user-answer-list'),
+
+
 ]

@@ -213,8 +213,8 @@ class FlickQuestionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FlickQuestion
-        fields = ['id', 'username', 'question_text', 'created_at', 'is_active']
-        read_only_fields = ['id', 'username', 'created_at']
+        fields = ['id', 'username', 'question_text', 'created_at', 'is_active','is_default']
+        read_only_fields = ['id', 'username', 'created_at','is_defalut']
     
     def create(self, validated_data):
         return FlickQuestion.objects.create(**validated_data)

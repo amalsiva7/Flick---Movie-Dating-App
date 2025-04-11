@@ -140,7 +140,7 @@ const FlickQuestionSender = () => {
         
         {/* Display previous questions if needed */}
         {showPrevQuestions && prevQuestions.length > 0 && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 z">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Previous Questions</h3>
             <ul className="space-y-2 max-h-48 overflow-y-auto">
               {prevQuestions.map((q) => (

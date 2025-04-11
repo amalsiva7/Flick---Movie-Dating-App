@@ -9,6 +9,8 @@ import uuid
 import hashlib
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -173,6 +175,16 @@ class FlickQuestion(models.Model):
             models.Index(fields=['is_active']),
         ]
 
+    @receiver(post_save, sender=get_user_model())
+    def create_default_question(sender, instance, created, **kwargs):
+        if created:
+            FlickQuestion.objects.create(
+                user=instance,
+                question_text="So, what's on your mind?!!",
+                is_active=True,
+                is_default=True
+            )
+
 class FlickAnswer(models.Model):
     question = models.ForeignKey(FlickQuestion, on_delete=models.CASCADE, related_name='answers')
     responder = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='given_answers')
@@ -186,3 +198,5 @@ class FlickAnswer(models.Model):
             models.Index(fields=['responder', '-created_at']),
         ]
 
+    def __str__(self):
+        return f"{self.responder.username}: {self.answer_text[:50]}..."
