@@ -582,24 +582,25 @@ class ActionView(APIView):
                 ).latest('created_at')
                 
                 # Create the answer
-                FlickAnswer.objects.create(
+                answer = FlickAnswer.objects.create(
                     question=active_question,
                     responder=request.user,
                     answer_text=user_answer
                 )
 
-                answer = FlickAnswer.objects.get(question=active_question, responder=request.user, answer_text=user_answer)
-                user_images = UserImage.objects.filter(user=request.user).first()
+                #get Image to send with the real time flickanswer
+                user_images = UserImage.objects.filter(user=answer.responder).first()
 
                 answer_data = {
                     'id': answer.id,
                     'answer_text': answer.answer_text,
-                    'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'created_at': localtime(answer.created_at).strftime('%Y-%m-%d %H:%M:%S'),
+                    'question_text': active_question.question_text,
                     'responder': {
-                        'id': request.user.id,
-                        'username': request.user.username,
-                        'profile_image': user_images.image1.url if user_images and user_images.image1 else None,
-                        'profile_url': f"/profile/{request.user.id}/"
+                        'id': answer.responder.id,
+                        'username': answer.responder.username,
+                        'profile_image': request.build_absolute_uri(user_images.image1.url) if user_images and user_images.image1 else None,
+                        'profile_url': f"/profile/{answer.responder.id}/"
                     }
                 }
 
@@ -608,15 +609,9 @@ class ActionView(APIView):
                     f"answers_{target_user.id}",
                     {
                         'type': 'send_answer',
-                        'answer_data': answer_data
+                        'answer_data': [answer_data]
                     }
                 )
-
-
-
-
-
-                print("Answer in ActionView along wth Question",active_question.question_text,'-->',user_answer)
                 
             except FlickQuestion.DoesNotExist:
                 return Response({"error": "No active question found"}, status=status.HTTP_400_BAD_REQUEST)
