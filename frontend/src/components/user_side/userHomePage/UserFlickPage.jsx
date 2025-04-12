@@ -79,7 +79,7 @@ const UserFlickPage = () => {
                         <div key={index} className="border p-4 rounded-xl shadow-sm relative">
                             <div className="flex items-center mb-3">
                                 <img
-                                    src={answer.responder.profile_image}
+                                    src={`http://localhost:8000${answer.responder.profile_image}`}
                                     className="w-12 h-12 rounded-full object-cover mr-3"
                                     alt="Profile"
                                     onError={(e) => {

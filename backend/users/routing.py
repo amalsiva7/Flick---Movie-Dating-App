@@ -9,6 +9,8 @@ print("Imported NotificationConsumer")
 websocket_urlpatterns = [
     re_path(r"ws/notifications/(?P<user_id>\w+)/$", NotificationConsumer.as_asgi()),
     re_path(r"ws/answers/(?P<user_id>\w+)/$", AnswerConsumer.as_asgi()),
+
+    
 ]
 
 

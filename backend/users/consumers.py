@@ -3,6 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from users.models import Notification,FlickAnswer, FlickQuestion
 from users.models import UserImage
+from django.utils.timezone import localtime
+
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
@@ -114,7 +116,7 @@ class AnswerConsumer(AsyncWebsocketConsumer):
                 all_answers.append({
                     'id': answer.id,
                     'answer_text': answer.answer_text,
-                    'created_at': answer.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'created_at': localtime(answer.created_at).strftime('%Y-%m-%d %H:%M:%S'),
                     'question_text': question.question_text,
                     'responder': {
                         'id': answer.responder.id,
@@ -128,3 +130,6 @@ class AnswerConsumer(AsyncWebsocketConsumer):
             'type': 'previous_answers',
             'answers': all_answers
         }))
+
+
+
