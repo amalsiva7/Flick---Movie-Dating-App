@@ -599,7 +599,7 @@ class ActionView(APIView):
                     'responder': {
                         'id': answer.responder.id,
                         'username': answer.responder.username,
-                        'profile_image': request.build_absolute_uri(user_images.image1.url) if user_images and user_images.image1 else None,
+                        'profile_image': user_images.image1.url if user_images and user_images.image1 else None,
                         'profile_url': f"/profile/{answer.responder.id}/"
                     }
                 }
@@ -607,6 +607,14 @@ class ActionView(APIView):
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(
                     f"answers_{target_user.id}",
+                    {
+                        'type': 'send_answer',
+                        'answer_data': [answer_data]
+                    }
+                )
+                
+                async_to_sync(channel_layer.group_send)(
+                    f"answers_{request.user.id}",
                     {
                         'type': 'send_answer',
                         'answer_data': [answer_data]
@@ -642,45 +650,26 @@ class ActionView(APIView):
                         'id': notification.id,
                         'notification_type': notification.notification_type,
                         'title': notification.title,
-                        'message': notification.message
+                        'message': notification.message,
                     }
                 }
             )
 
-             # Send through Flick channel
-            async_to_sync(channel_layer.group_send)(
-                f"flick_{target_user.id}",
-                {
-                    'type': 'send_flick_message',
-                    'flick_data': {
-                        'sender': request.user.username,
-                        'question': active_question.question_text,
-                        'answer': user_answer,
-                        'timestamp': str(notification.created_at)
-                    }
-                }
-            )
+            print(notification.notification_type,"********************NOTIFICATION TYPE**********************")
 
-
-            # mutual_interest = ActionHistory.objects.filter(
-            #     user_id=target_user,
-            #     target_user=request.user,
-            #     action='flick_message'
-            # ).exists()
-
-            # if mutual_interest:
-            #     match = Match.objects.create(user1=request.user, user2=target_user)
-                
-            #     async_to_sync(channel_layer.group_send)(
-            #         f"user_{request.user.id}",
-            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
-            #     )
-            #     async_to_sync(channel_layer.group_send)(
-            #         f"user_{target_user.id}",
-            #         {'type': 'send_notification', 'message': {"type": "match", "message": "It's a match!"}}
-            #     )
-
-            #     return Response({"message": "It's a match!", "matched": True})
+            #  # Send through Flick channel
+            # async_to_sync(channel_layer.group_send)(
+            #     f"flick_{target_user.id}",
+            #     {
+            #         'type': 'send_flick_message',
+            #         'flick_data': {
+            #             'sender': request.user.username,
+            #             'question': active_question.question_text,
+            #             'answer': user_answer,
+            #             'timestamp': str(notification.created_at)
+            #         }
+            #     }
+            # )
 
         return self.get_next_profile(request)
     
@@ -785,26 +774,6 @@ class FlickQuestionView(APIView):
                     }
                 }
             )
-
-            
-            #Create notification for new question
-            # notification = Notification.objects.create(
-            #     recipient=request.user,
-            #     message=f"Your question was posted: {question.question_text[:30]}{'...' if len(question.question_text) > 30 else ''}",
-            # )
-            
-            # #Send real-time notification
-            # channel_layer = get_channel_layer()
-            # async_to_sync(channel_layer.group_send)(
-            #     f'user_{request.user.id}',
-            #     {
-            #         'type': 'send_notification',
-            #         'message': {
-            #             'id': notification.id,
-            #             'message': notification.message,
-            #         }
-            #     }
-            # )
             
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -829,41 +798,79 @@ class ActiveQuestionView(APIView):
 
 
 
-class UserAnswerListView(APIView):
+class MatchView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, user_id):
-        try:
-            # Get all questions asked by the user
-            questions = FlickQuestion.objects.filter(user_id=user_id)
+    def post(self, request):
+        target_user_id = request.data.get('target_user_id')  
+        action = request.data.get('action')
+        
+        if action == 'flick_message':
 
-            answer_data = []
-            for question in questions:
-                answers = FlickAnswer.objects.filter(question=question).select_related('responder__profile', 'responder__images')
+            # Check if match already exists between these users
+            existing_match = Match.objects.filter(
+                Q(user1=request.user, user2_id=target_user_id) |
+                Q(user1_id=target_user_id, user2=request.user)
+            ).exists()
 
-                for answer in answers:
-                    user_images = UserImage.objects.filter(user=answer.responder).first()
-                    answer_data.append({
-                        'id': answer.id,
-                        'answer_text': answer.answer_text,
-                        'created_at': localtime(answer.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-                        'question_text':question.question_text,
-                        'responder': {
-                            'id': answer.responder.id,
-                            'username': answer.responder.username,
-                            'profile_image': request.build_absolute_uri(user_images.image1.url) if user_images and user_images.image1 else None,
-                            'profile_url': f"/profile/{answer.responder.id}/"
-                        }
-                    })
+            if existing_match:
+                return Response({"message": "Match already exists", "matched": True})
+            
+            
+            # Save action in ActionHistory
+            ActionHistory.objects.create(
+                user=request.user,
+                target_user_id=target_user_id,
+                action='flick_message'
+            )
 
-                    for ans in answer_data:
-                        print(f"{ans['responder']['username']} answered: \"{ans['answer_text']}\" at {ans['created_at']}")
+            # Check for mutual interest
+            mutual_interest = ActionHistory.objects.filter(
+                user_id=target_user_id,
+                target_user=request.user,
+                action='flick_message'
+            ).exists()
 
+            if mutual_interest:
+                # Create a match
+                match = Match.objects.create(user1=request.user, user2_id=target_user_id)
 
-            return Response(answer_data)
+                print("its a Match!!!!!!!!!!!!")
 
-        except FlickQuestion.DoesNotExist:
-            return Response({"error": "Invalid user"}, status=404)
+                # Save notification for both users
+                Notification.objects.bulk_create([
+                    Notification(
+                        recipient=request.user,
+                        sender_id=target_user_id,
+                        notification_type='match',
+                        title="It's a match!",
+                        message=f"You matched with {target_user_id.}!",
+                        related_match=match
+                    ),
+                    Notification(
+                        recipient_id=target_user_id,
+                        sender=request.user,
+                        notification_type='match',
+                        title="It's a match!",
+                        message=f"You matched with {request.user}!",
+                        related_match=match
+                    )
+                ])
+
+                # Send real-time notifications via WebSocket
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{request.user.id}",
+                    {'type': 'send_notification', 'message': {"notification_type": "match", "message": f"It's a match with {target_user_id.username}!"}}
+                )
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user_id}",
+                    {'type': 'send_notification', 'message': {"type": "match", "message": f"It's a match with {request.user.username}!!"}}
+                )
+
+                return Response({"message": "It's a match!", "matched": True})
+
+        return Response({"message": "Action registered", "matched": False})
 
 
 

@@ -2,8 +2,11 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from users.models import Notification,FlickAnswer, FlickQuestion
+from users.models import Match
 from users.models import UserImage
 from django.utils.timezone import localtime
+from django.db.models import Q
+
 
 
 
@@ -55,7 +58,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 "id": notification.id,
                 "message": notification.message,
                 "read": notification.is_read,
-                "timestamp": notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                "timestamp": notification.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "type": notification.notification_type,
             }
             for notification in notifications
         ]
@@ -113,6 +117,13 @@ class AnswerConsumer(AsyncWebsocketConsumer):
 
             for answer in answers:
                 user_image = await sync_to_async(UserImage.objects.filter(user=answer.responder).first)()
+                
+                # Check if a match exists between the current user and the responder
+                is_matched = await sync_to_async(Match.objects.filter(
+                    Q(user1_id=self.user_id, user2=answer.responder) |
+                    Q(user1=answer.responder, user2_id=self.user_id)
+                ).exists)()
+
                 all_answers.append({
                     'id': answer.id,
                     'answer_text': answer.answer_text,
@@ -122,7 +133,8 @@ class AnswerConsumer(AsyncWebsocketConsumer):
                         'id': answer.responder.id,
                         'username': answer.responder.username,
                         'profile_image': user_image.image1.url if user_image and user_image.image1 else None,
-                        'profile_url': f"/profile/{answer.responder.id}/"
+                        'profile_url': f"/profile/{answer.responder.id}/",
+                        'is_matched': is_matched  # Include match status
                     }
                 })
 
@@ -130,6 +142,7 @@ class AnswerConsumer(AsyncWebsocketConsumer):
             'type': 'previous_answers',
             'answers': all_answers
         }))
+
 
 
 
