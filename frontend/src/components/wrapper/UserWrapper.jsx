@@ -121,6 +121,14 @@ const UserWrapper = () => {
             </PrivateRoutes>
           )
         },
+        {
+          path: "dm-chat",
+          element: (
+            <PrivateRoutes>
+              <ChatInterface/>
+            </PrivateRoutes>
+          )
+        },
         
         {
           path: "subscription",

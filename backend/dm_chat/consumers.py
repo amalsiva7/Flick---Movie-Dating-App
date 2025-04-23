@@ -85,3 +85,49 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'error': 'Failed to send message'
             }))
+
+
+logger = logging.getLogger(__name__)
+
+class ChatNotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+        self.room_group_name = f"notification_{self.user_id}"
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+        logger.info(f"User {self.user_id} connected to notifications")
+
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+        logger.info(f"User {self.user_id} disconnected from notifications")
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_notification',
+                'message': message
+            }
+        )
+
+    # Receive message from room group
+    async def chat_notification(self, event):
+        message = event['message']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
