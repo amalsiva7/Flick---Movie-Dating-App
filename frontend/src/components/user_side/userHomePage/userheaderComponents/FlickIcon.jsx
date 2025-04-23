@@ -58,7 +58,7 @@ const FlickIcon = () => {
     <div className="relative">
       <button
         onClick={handleNavigateToFlick}
-        className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring focus:ring-yellow-400"
+        className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center focus:outline-none"
         aria-label="Navigate to Flick page"
       >
         <Zap className="w-6 h-6 text-yellow-500" />

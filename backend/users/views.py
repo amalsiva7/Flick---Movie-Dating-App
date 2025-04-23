@@ -844,7 +844,7 @@ class MatchView(APIView):
                         sender_id=target_user_id,
                         notification_type='match',
                         title="It's a match!",
-                        message=f"You matched with {target_user_id.}!",
+                        message=f"You matched with {target_user_id.username}!",
                         related_match=match
                     ),
                     Notification(
@@ -852,7 +852,7 @@ class MatchView(APIView):
                         sender=request.user,
                         notification_type='match',
                         title="It's a match!",
-                        message=f"You matched with {request.user}!",
+                        message=f"You matched with {request.user.username}!",
                         related_match=match
                     )
                 ])

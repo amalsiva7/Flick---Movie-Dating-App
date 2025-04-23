@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import NotificationIcon from "./userheaderComponents/NotificationIcon";
 import { useSelector } from "react-redux";
 import FlickIcon from "./userheaderComponents/FlickIcon";
+import MessageIcon from "./userheaderComponents/MesssageIcon";
 
 const UserHomeHeader = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -31,7 +32,7 @@ const UserHomeHeader = () => {
       <div className="flex items-center gap-20 relative">
         <FlickIcon />
         <NotificationIcon />
-        <MessageCircle className="w-6 h-6 text-gray-600 cursor-pointer hover:text-blue-500 transition-colors" />
+        <MessageIcon/>
 
         {/* Username Display */}
         {username && <span className="text-gray-700 text-sm">{username}</span>}

@@ -1,0 +1,50 @@
+from rest_framework import serializers
+from .models import Users, UserImage, Match
+from django.utils import timezone
+
+
+class MatchedUserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+    last_seen = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Users
+        fields = ('id', 'username', 'email', 'profile_image', 'last_seen')
+
+    def get_profile_image(self, user):
+        
+        try:
+            user_image = UserImage.objects.get(user=user)  # Assuming OneToOne relationship
+            if user_image.image1:
+                return user_image.image1.url
+            elif user_image.image2:
+                return user_image.image2.url
+            elif user_image.image3:
+                return user_image.image3.url
+            elif user_image.image4:
+                return user_image.image4.url
+            return None
+        except UserImage.DoesNotExist:
+            return None
+
+    def get_last_seen(self, user):
+         """
+        Returns the time difference between the current time and the user's last login.
+        """
+         if user.last_login:
+            now = timezone.now()
+            time_difference = now - user.last_login
+            days = time_difference.days
+            hours, remainder = divmod(time_difference.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+
+            if days > 0:
+                return f"{days} days ago"
+            elif hours > 0:
+                return f"{hours} hours ago"
+            elif minutes > 0:
+                return f"{minutes} minutes ago"
+            else:
+                return "Just now"
+         else:
+            return "Never"

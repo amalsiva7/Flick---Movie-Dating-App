@@ -16,6 +16,8 @@ import UserProfile from '../user_side/userProfile/UserProfile';
 import UserCard from '../user_side/userhomepage/UserCard';
 import UserFlickPage from '../user_side/userhomepage/UserFlickPage';
 import UserSubscription from '../user_side/usersubscription/UserSubscription';
+import ChatInterface from '../user_side/userhomepage/ChatInterface';
+import ChatUserList from '../user_side/userhomepage/ChatUsersList';
 
 const UserWrapper = () => {
   const authentication_user = useSelector((state) => state.authentication_user);
@@ -108,6 +110,14 @@ const UserWrapper = () => {
           element: (
             <PrivateRoutes>
               <UserFlickPage/>
+            </PrivateRoutes>
+          )
+        },
+        {
+          path: "chat",
+          element: (
+            <PrivateRoutes>
+              <ChatUserList/>
             </PrivateRoutes>
           )
         },
