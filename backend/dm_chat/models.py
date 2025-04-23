@@ -4,24 +4,23 @@ from django.db import models
 from users.models import *
 from django.conf import settings
 
-class ChatRoomModel(models.Model):
+
+User = settings.AUTH_USER_MODEL
+
+class ChatRoom(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    user1 = models.IntegerField(blank=True, null=True)
-    user2 = models.IntegerField(blank=True, null=True)
-    user1_name = models.CharField(max_length=50, blank=True, null=True)
-    user2_name = models.CharField(max_length=50, blank=True, null=True)
+    user1 = models.ForeignKey(User, related_name='chatroom_user1', on_delete=models.CASCADE)
+    user2 = models.ForeignKey(User, related_name='chatroom_user2', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
 
 
-
 class Message(models.Model):
-    room = models.ForeignKey(ChatRoomModel, on_delete=models.CASCADE, related_name='messages')
-    user_id = models.IntegerField(blank=True, null=True)
-    username = models.CharField(max_length=50, blank=True, null=True)
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sender_name')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='receiver_name')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)

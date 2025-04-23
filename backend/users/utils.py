@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.utils.timezone import now
 from math import radians, sin, cos, sqrt, atan2
+from .models import *
 
 def format_time_difference(last_updated_at):
     now_time = now()
@@ -102,3 +103,27 @@ def calculate_match_percentage(user1_profile, user2_profile):
     
     # Convert to percentage and round to 2 decimal places
     return round(score * 100, 2)
+
+
+
+# utils.py (or wherever appropriate)
+from dm_chat.models import ChatRoom
+from django.shortcuts import get_object_or_404
+
+def get_or_create_chatroom(user, target_user_id):
+    target_user = get_object_or_404(Users, id=target_user_id)
+
+    # Sort users to ensure consistent room names
+    sorted_ids = sorted([user.id, target_user.id])
+    room_name = f"chat_{sorted_ids[0]}_{sorted_ids[1]}"
+
+    # Create or fetch chatroom
+    chatroom, created = ChatRoom.objects.get_or_create(
+        name=room_name,
+        defaults={
+            "user1": user if user.id == sorted_ids[0] else target_user,
+            "user2": target_user if user.id == sorted_ids[0] else user
+        }
+    )
+
+    return chatroom
