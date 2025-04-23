@@ -9,8 +9,13 @@ logger = logging.getLogger(__name__)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.sender_id = self.scope['user'].id
-        self.receiver_id = self.scope['url_route']['kwargs']['receiver_id']
+        
+        user = self.scope.get('user')
+        self.user_id = self.scope['url_route']['kwargs']['receiver_id']
+
+        if not user or user.is_anonymous or str(user.id) != self.user_id:
+            await self.close()
+            return
 
         # Ensure consistent room naming (lower ID first)
         if int(self.sender_id) > int(self.receiver_id):
@@ -91,8 +96,15 @@ logger = logging.getLogger(__name__)
 
 class ChatNotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        user = self.scope.get('user')
         self.user_id = self.scope['url_route']['kwargs']['user_id']
-        self.room_group_name = f"notification_{self.user_id}"
+
+        if not user or user.is_anonymous or str(user.id) != self.user_id:
+            await self.close()
+            return
+
+
+        self.room_group_name = f"chat_notification_{self.user_id}"
 
         await self.channel_layer.group_add(
             self.room_group_name,

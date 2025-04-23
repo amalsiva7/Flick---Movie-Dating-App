@@ -12,10 +12,8 @@ class MatchedUsersListView(APIView):
 
     def get(self, request):
         user = request.user
-        # Find matches where the current user is user1 or user2
         matches = Match.objects.filter(Q(user1=user) | Q(user2=user), is_active=True)
 
-        # Extract the matched users, excluding the current user
         matched_users = []
         for match in matches:
             if match.user1 != user:
@@ -23,6 +21,6 @@ class MatchedUsersListView(APIView):
             else:
                 matched_users.append(match.user2)
 
-        # Serialize the matched users
-        serializer = MatchedUserSerializer(matched_users, many=True)
+        serializer = MatchedUserSerializer(matched_users, many=True, context={'current_user': user})
         return Response(serializer.data, status=status.HTTP_200_OK)
+

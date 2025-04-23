@@ -857,6 +857,16 @@ class MatchView(APIView):
                     )
                 ])
 
+                 # Create a chat room
+                chat_room_name = f"chat_{request.user.id}_{target_user_id}"
+                chat_room = ChatRoomModel.objects.create(
+                    name=chat_room_name,
+                    user1=request.user.id,
+                    user2=target_user_id,
+                    user1_name=request.user.username,
+                    user2_name=target_user_id.username
+                )
+
                 # Send real-time notifications via WebSocket
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(

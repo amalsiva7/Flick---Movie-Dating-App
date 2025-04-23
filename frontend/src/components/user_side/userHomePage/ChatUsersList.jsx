@@ -26,8 +26,8 @@ const ChatUserList = () => {
     fetchMatchedUsers();
   }, []);
 
-  const goToChat = (TargetUserId) => {
-    navigate(`/dm-chat/${TargetUserId}`);
+  const goToChat = (chatRoomId) => {
+    navigate(`/dm-chat/${chatRoomId}`);
   };
 
 
@@ -45,7 +45,7 @@ const ChatUserList = () => {
                 <li
                   key={user.id}
                   className="flex items-center gap-4 mb-4 p-2 rounded hover:bg-gray-100 cursor-pointer"
-                  onClick={() => goToChat(user.id)}
+                  onClick={() => goToChat(user.chat_room_id)}
                 >
                   <img
                     src={`http://localhost:8000${user.profile_image}`}

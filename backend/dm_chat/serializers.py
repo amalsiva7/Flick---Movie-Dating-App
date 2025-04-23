@@ -6,13 +6,14 @@ from django.utils import timezone
 class MatchedUserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
     last_seen = serializers.SerializerMethodField()
+    chat_room_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Users
-        fields = ('id', 'username', 'email', 'profile_image', 'last_seen')
+        fields = ('id', 'username', 'email', 'profile_image', 'last_seen','chat_room_id')
 
     def get_profile_image(self, user):
-        
+
         try:
             user_image = UserImage.objects.get(user=user)  # Assuming OneToOne relationship
             if user_image.image1:
@@ -48,3 +49,15 @@ class MatchedUserSerializer(serializers.ModelSerializer):
                 return "Just now"
          else:
             return "Never"
+         
+    def get_chat_room_id(self, matched_user):
+        # The current user is available in serializer context
+        current_user = self.context.get('current_user')
+        if not current_user:
+            return None
+
+        # Generate chat room ID by sorting user IDs to ensure uniqueness
+        user_ids = sorted([str(current_user.id), str(matched_user.id)])
+        return f"chat_{user_ids[0]}_{user_ids[1]}"
+    
+

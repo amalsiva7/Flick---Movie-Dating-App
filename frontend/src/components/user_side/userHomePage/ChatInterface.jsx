@@ -13,7 +13,7 @@ const ChatInterface = () => {
   useEffect(() => {
     if (!userId || !receiver_id) return;
 
-    const wsUrl = `ws://localhost:8000/ws/chat/${receiver_id}/`; // Adjust URL
+    const wsUrl = `ws://localhost:8000/ws/chat/${receiver_id}/`;
     const newSocket = new WebSocket(wsUrl);
 
     setSocket(newSocket);
