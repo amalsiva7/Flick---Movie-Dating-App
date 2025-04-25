@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
 const ChatInterface = () => {
-  const { receiver_id } = useParams();
+  const { room_name  } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
@@ -11,9 +11,9 @@ const ChatInterface = () => {
   const userId = localStorage.getItem('user_id'); // Replace with your actual user ID retrieval
 
   useEffect(() => {
-    if (!userId || !receiver_id) return;
+    if (!userId || !room_name ) return;
 
-    const wsUrl = `ws://localhost:8000/ws/chat/${receiver_id}/`;
+    const wsUrl = `ws://localhost:8000/ws/chat/${room_name}/`;
     const newSocket = new WebSocket(wsUrl);
 
     setSocket(newSocket);

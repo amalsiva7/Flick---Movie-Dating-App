@@ -44,8 +44,8 @@ const UserFlickPage = () => {
     }
   };
 
-  const goToChatBox = (responderId) => {
-    navigate(`/chat/${responderId}`);
+  const goToChatBox = (chatRoomName) => {
+    navigate(`/dm-chat/${chatRoomName}`);
   };
 
   useEffect(() => {
@@ -122,7 +122,7 @@ const UserFlickPage = () => {
                     Match
                   </button>
                 ) : (
-                    <div className="absolute bottom-3 right-3 flex items-center gap-2 cursor-pointer" onClick={() => goToChatBox(answer.responder.id)}>
+                    <div className="absolute bottom-3 right-3 flex items-center gap-2 cursor-pointer" onClick={() => goToChatBox(answer.responder.chatroom)}>
                     <span className="text-green-500 font-semibold">Matched</span>
                     <MessageCircle
                       className="text-blue-500 hover:text-blue-700"

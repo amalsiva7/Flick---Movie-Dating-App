@@ -11,17 +11,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         
         user = self.scope.get('user')
-        self.user_id = self.scope['url_route']['kwargs']['receiver_id']
+        self.user_id = self.scope['url_route']['kwargs']['room_name']
 
         if not user or user.is_anonymous or str(user.id) != self.user_id:
             await self.close()
             return
-
-        # Ensure consistent room naming (lower ID first)
-        if int(self.sender_id) > int(self.receiver_id):
-            self.room_group_name = f"chat_{self.receiver_id}_{self.sender_id}"
-        else:
-            self.room_group_name = f"chat_{self.sender_id}_{self.receiver_id}"
+        
+        # Validate user is part of the chatroom
+        user1_id, user2_id = self.room_name.replace('chat_', '').split('_')
+        if str(user.id) not in {user1_id, user2_id}:
+            await self.close()
+            return
+        
+        self.room_group_name = f"chat_{self.room_name}"
 
 
         await self.channel_layer.group_add(

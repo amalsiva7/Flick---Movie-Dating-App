@@ -613,7 +613,8 @@ class ActionView(APIView):
                     }
                 )
 
-                
+                print('********************WEBSOCKET SEND ANSWER DATA IN ACTION VIEW**************************',answer_data)
+
                 async_to_sync(channel_layer.group_send)(
                     f"answers_{request.user.id}",
                     {
@@ -805,6 +806,8 @@ class MatchView(APIView):
     def post(self, request):
         target_user_id = request.data.get('target_user_id')  
         action = request.data.get('action')
+
+        target_user = Users.objects.get(id = target_user_id)
         
         if action == 'flick_message':
 
@@ -845,7 +848,7 @@ class MatchView(APIView):
                         sender_id=target_user_id,
                         notification_type='match',
                         title="It's a match!",
-                        message=f"You matched with {target_user_id.username}!",
+                        message=f"You matched with {target_user.username}!",
                         related_match=match
                     ),
                     Notification(
@@ -867,14 +870,14 @@ class MatchView(APIView):
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(
                     f"user_{request.user.id}",
-                    {'type': 'send_notification', 'message': {"notification_type": "match", "message": f"It's a match with {target_user_id.username}!"}}
+                    {'type': 'send_notification', 'message': {"notification_type": "match", "message": f"It's a match with {target_user.username}!"}}
                 )
                 async_to_sync(channel_layer.group_send)(
                     f"user_{target_user_id}",
                     {'type': 'send_notification', 'message': {"type": "match", "message": f"It's a match with {request.user.username}!!"}}
                 )
 
-                return Response({"message": "It's a match!", "matched": True})
+                return Response({"message": "It's a match!", "matched": True, "chatroom": chat_room.name})
 
         return Response({"message": "Action registered", "matched": False})
 
