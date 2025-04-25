@@ -34,7 +34,7 @@ const UserFlickPage = () => {
         setAnswers((prevAnswers) =>
           prevAnswers.map((answer) =>
             answer.responder.id === targetUserId
-              ? { ...answer, responder: { ...answer.responder, is_matched: true } }
+              ? { ...answer, responder: { ...answer.responder, is_matched: true, chatroom: response.data.chatroom } }
               : answer
           )
         );
@@ -65,6 +65,7 @@ const UserFlickPage = () => {
 
       if (data.type === "previous_answers") {
         setAnswers(data.answers);
+
       }
 
       if (data.type === "flick_answer") {
