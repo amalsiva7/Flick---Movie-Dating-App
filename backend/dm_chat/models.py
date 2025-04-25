@@ -17,7 +17,7 @@ class ChatRoom(models.Model):
 
 
 
-class Message(models.Model):
+class ChatMessage(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sender_name')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='receiver_name')

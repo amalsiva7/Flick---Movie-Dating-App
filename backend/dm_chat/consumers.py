@@ -1,7 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from .models import Message
+from .models import ChatMessage
 import logging
 
 # Get an instance of a logger
@@ -49,7 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # message_content = sanitize_message(message_content)
 
             # Save message to database
-            message = await sync_to_async(Message.objects.create)(
+            message = await sync_to_async(ChatMessage.objects.create)(
                 sender_id=self.sender_id,
                 receiver_id=self.receiver_id,
                 content=message_content,

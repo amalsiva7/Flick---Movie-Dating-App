@@ -612,6 +612,7 @@ class ActionView(APIView):
                         'answer_data': [answer_data]
                     }
                 )
+
                 
                 async_to_sync(channel_layer.group_send)(
                     f"answers_{request.user.id}",

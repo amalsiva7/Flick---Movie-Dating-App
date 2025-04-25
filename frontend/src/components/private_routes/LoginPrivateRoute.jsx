@@ -33,7 +33,7 @@ function LoginPrivateRoute({ children }) {
     if (isAdmin) {
       return <Navigate to="/admin" />;
     }
-    return <Navigate to="/user" />;
+    return <Navigate to="/user/home" />;
   }
 
   // Render children if not authenticated

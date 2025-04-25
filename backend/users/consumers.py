@@ -35,6 +35,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send_existing_notifications()
 
     async def disconnect(self, close_code):
+
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
@@ -42,6 +43,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def send_notification(self, event):
         message = event['message']
+
+        print('***************************inside the send_notification in NotificationConsumer************************',message)
 
         await self.send(text_data=json.dumps({
             'type': 'notification',
@@ -99,6 +102,10 @@ class AnswerConsumer(AsyncWebsocketConsumer):
             )
 
     async def send_answer(self, event):
+
+        print('***************************inside the send_answer in AnswerConsumer************************',event['answer_data'])
+    
+
         await self.send(text_data=json.dumps({
             'type': 'flick_answer',
             'answers': event['answer_data']
@@ -142,7 +149,3 @@ class AnswerConsumer(AsyncWebsocketConsumer):
             'type': 'previous_answers',
             'answers': all_answers
         }))
-
-
-
-
