@@ -2,16 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
 const ChatInterface = () => {
-  const { room_name  } = useParams();
+  const { room_name } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const chatBoxRef = useRef(null);
 
-  const userId = localStorage.getItem('user_id'); // Replace with your actual user ID retrieval
+  const userId = localStorage.getItem('user_id'); // Make sure this is set correctly
 
   useEffect(() => {
-    if (!userId || !room_name ) return;
+    if (!userId || !room_name) return;
 
     const wsUrl = `ws://localhost:8000/ws/chat/${room_name}/`;
     const newSocket = new WebSocket(wsUrl);
@@ -38,15 +38,13 @@ const ChatInterface = () => {
     return () => {
       newSocket.close();
     };
-  }, [receiver_id, userId]);
+  }, [room_name, userId]); // <-- fixed dependencies
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [messages]);
-
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -58,7 +56,7 @@ const ChatInterface = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-semibold mb-4">Chat with {receiver_id}</h2>
+      <h2 className="text-2xl font-semibold mb-4">Chat Room: {room_name}</h2>
       <div
         ref={chatBoxRef}
         className="h-96 overflow-y-auto border rounded p-2 mb-2"

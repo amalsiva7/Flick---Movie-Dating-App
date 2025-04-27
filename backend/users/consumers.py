@@ -6,6 +6,7 @@ from users.models import Match
 from users.models import UserImage
 from django.utils.timezone import localtime
 from django.db.models import Q
+from dm_chat.models import ChatRoom
 
 
 
@@ -131,6 +132,15 @@ class AnswerConsumer(AsyncWebsocketConsumer):
                     Q(user1=answer.responder, user2_id=self.user_id)
                 ).exists)()
 
+                chatroom = None
+                if is_matched:
+                    # Get chatroom using the same logic as get_or_create_chatroom
+                    sorted_ids = sorted([int(self.user_id), answer.responder])
+                    chatroom = await sync_to_async(ChatRoom.objects.filter(
+                        name=f"chat_{sorted_ids[0]}_{sorted_ids[1]}"
+                    ).first)()
+                    chatroom = chatroom.name if chatroom else None
+
                 all_answers.append({
                     'id': answer.id,
                     'answer_text': answer.answer_text,
@@ -141,7 +151,8 @@ class AnswerConsumer(AsyncWebsocketConsumer):
                         'username': answer.responder.username,
                         'profile_image': user_image.image1.url if user_image and user_image.image1 else None,
                         'profile_url': f"/profile/{answer.responder.id}/",
-                        'is_matched': is_matched  # Include match status
+                        'is_matched': is_matched,  # Include match status
+                         'chatroom': chatroom,
                     }
                 })
 
