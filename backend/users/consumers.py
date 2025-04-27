@@ -135,7 +135,7 @@ class AnswerConsumer(AsyncWebsocketConsumer):
                 chatroom = None
                 if is_matched:
                     # Get chatroom using the same logic as get_or_create_chatroom
-                    sorted_ids = sorted([int(self.user_id), answer.responder])
+                    sorted_ids = sorted([int(self.user_id), answer.responder.id])
                     chatroom = await sync_to_async(ChatRoom.objects.filter(
                         name=f"chat_{sorted_ids[0]}_{sorted_ids[1]}"
                     ).first)()

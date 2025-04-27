@@ -29,7 +29,7 @@ const UserWrapper = () => {
     dispatch(
         setAuthentication({
             id: isAuthenticated.id,
-            username: isAuthenticated.name,
+            username: isAuthenticated.username,
             isAuthenticated: isAuthenticated.isAuthenticated,
             isAdmin: isAuthenticated.isAdmin,
         })
@@ -52,7 +52,7 @@ const UserWrapper = () => {
 
   useEffect(()=>{
     checkAuth();
-  })
+  },[])
 
 
   const routes = useRoutes([
@@ -122,7 +122,7 @@ const UserWrapper = () => {
           )
         },
         {
-          path: "dm-chat",
+          path: "dm-chat/:room_name",
           element: (
             <PrivateRoutes>
               <ChatInterface/>

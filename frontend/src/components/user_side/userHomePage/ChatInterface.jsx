@@ -1,19 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 const ChatInterface = () => {
+  const { id: userId } = useSelector((state) => state.authentication_user);
   const { room_name } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
   const chatBoxRef = useRef(null);
 
-  const userId = localStorage.getItem('user_id'); // Make sure this is set correctly
+  const token = localStorage.getItem('access'); // Make sure this is set correctly
 
   useEffect(() => {
+
+    console.log(userId,room_name,"*********************USER ID, CHAT ROOM NAME IN CHAT INTERFACE*********************")
+
     if (!userId || !room_name) return;
 
-    const wsUrl = `ws://localhost:8000/ws/chat/${room_name}/`;
+    const wsUrl = `ws://localhost:8000/ws/chat/${room_name}/${userId}/?token=${token}`;
     const newSocket = new WebSocket(wsUrl);
 
     setSocket(newSocket);
@@ -68,7 +73,6 @@ const ChatInterface = () => {
               msg.sender === userId ? 'bg-blue-100 ml-auto w-fit max-w-2/3' : 'bg-gray-100 mr-auto w-fit max-w-2/3'
             }`}
           >
-            <div className="text-sm text-gray-600">{msg.sender}</div>
             <div>{msg.message}</div>
             <div className="text-xs text-gray-500">{msg.timestamp}</div>
           </div>

@@ -34,8 +34,6 @@ const UserHomeHeader = () => {
         <NotificationIcon />
         <MessageIcon/>
 
-        {/* Username Display */}
-        {username && <span className="text-gray-700 text-sm">{username}</span>}
 
         <div className="relative">
           {/* User icon with dropdown toggle */}
@@ -46,14 +44,22 @@ const UserHomeHeader = () => {
 
           {/* Dropdown menu */}
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-32 z-50">
+            
+            <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-32 z-50 flex flex-col items-center py-2">
+              {/* Username Display */}
+              {username && (
+                <span className=" text-gray-700 text-sm font-bold mb-2">
+                  Hi, {username}
+                </span>
+              )}
               <button
                 onClick={handleLogout}
-                className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 text-sm"
+                className="block w-full px-3 py-2 text-center text-gray-700 hover:bg-gray-100 text-sm"
               >
                 Logout
               </button>
             </div>
+
           )}
         </div>
       </div>

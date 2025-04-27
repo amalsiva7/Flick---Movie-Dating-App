@@ -1,7 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from .models import ChatMessage
+from .models import ChatMessage,ChatRoom
 import logging
 
 # Get an instance of a logger
@@ -9,22 +9,24 @@ logger = logging.getLogger(__name__)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        
         user = self.scope.get('user')
-        self.user_id = self.scope['url_route']['kwargs']['room_name']
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
 
         if not user or user.is_anonymous or str(user.id) != self.user_id:
             await self.close()
             return
-        
-        # Validate user is part of the chatroom
+
         user1_id, user2_id = self.room_name.replace('chat_', '').split('_')
         if str(user.id) not in {user1_id, user2_id}:
             await self.close()
             return
-        
+
+        self.sender_id = str(user.id)
+        self.receiver_id = user2_id if self.sender_id == user1_id else user1_id
         self.room_group_name = f"chat_{self.room_name}"
 
+        self.chat_room = await sync_to_async(ChatRoom.objects.get)(name=self.room_name)
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -41,7 +43,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         logger.info(f"User {self.sender_id} disconnected from chat with {self.receiver_id}")
 
-
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
@@ -52,9 +53,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             # Save message to database
             message = await sync_to_async(ChatMessage.objects.create)(
+
                 sender_id=self.sender_id,
                 receiver_id=self.receiver_id,
                 content=message_content,
+                room=self.chat_room,
             )
 
             # Broadcast message to group

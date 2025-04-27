@@ -45,7 +45,7 @@ const UserFlickPage = () => {
   };
 
   const goToChatBox = (chatRoomName) => {
-    navigate(`/dm-chat/${chatRoomName}`);
+    navigate(`/user/dm-chat/${chatRoomName}`);
   };
 
   useEffect(() => {

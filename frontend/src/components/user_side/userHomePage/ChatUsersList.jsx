@@ -27,7 +27,7 @@ const ChatUserList = () => {
   }, []);
 
   const goToChat = (chatRoomId) => {
-    navigate(`/dm-chat/${chatRoomId}`);
+    navigate(`/user/dm-chat/${chatRoomId}`);
   };
 
 
