@@ -147,7 +147,7 @@ const ChatInterface = () => {
         ref={chatBoxRef}
         onScroll={handleScroll}
         className="flex-grow h-96 overflow-y-auto border rounded p-4 mb-2 space-y-2 bg-white"
-        style={{ backgroundColor: '#ECE5DD' }} // WhatsApp-like background
+        style={{ backgroundColor: '#f6fff8' }} // WhatsApp-like background
       >
         {loadingMessages && page === 1 && (
           <div className="text-center text-gray-500 mb-2">Loading messages...</div>
@@ -162,7 +162,7 @@ const ChatInterface = () => {
               <div
                 className={`p-3 rounded-lg max-w-xs md:max-w-md lg:max-w-lg shadow
                   ${isMe
-                    ? 'bg-green-500 text-white rounded-br-none'
+                    ? 'bg-yellow-300 text-black rounded-br-none'
                     : 'bg-white text-gray-900 rounded-bl-none'
                   }`}
                 style={{
@@ -172,7 +172,7 @@ const ChatInterface = () => {
                 }}
               >
                 <div>{msg.message}</div>
-                <div className={`text-xs mt-1 ${isMe ? 'text-green-100' : 'text-gray-500'}`}>
+                <div className={`text-xs mt-1 ${isMe ? 'text-black-100' : 'text-gray-500'}`}>
                   {msg.timestamp}
                 </div>
               </div>
@@ -195,7 +195,7 @@ const ChatInterface = () => {
           onChange={(e) => setNewMessage(e.target.value)}
           autoComplete="off"
         />
-        <button type="submit" className="bg-green-500 hover:bg-green-600 text-white rounded p-2 transition-colors duration-200">
+        <button type="submit" className="bg-slate-500 hover:bg-slate-800 text-white rounded p-2 transition-colors duration-200">
           Send
         </button>
       </form>

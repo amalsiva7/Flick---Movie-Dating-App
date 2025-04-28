@@ -60,6 +60,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 room=self.chat_room,
             )
 
+            # Format timestamp before sending
+            formatted_timestamp = message.timestamp.strftime('%d-%m-%y %H:%M')
+
             # Broadcast message to group
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -67,7 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'type': 'chat_message',
                     'message': message.content,
                     'sender': self.scope['user'].id,
-                    'timestamp': str(message.timestamp),
+                    'timestamp': formatted_timestamp,
                 }
             )
 
