@@ -53,15 +53,14 @@ class ChatMessageListView(ListAPIView):
         return ChatMessage.objects.filter(room=chat_room).order_by('-timestamp')
 
 
-class ChatUserImageView(APIView):
+class ChatUserDetailView(APIView):
     def get(self, request, user_id):
+        print("*************************Call came to ChatUserImageView in dm_chat View********************")
+
         try:
-            # Convert user_id to integer if it's coming as string
-            user = Users.objects.get(pk=int(user_id))
+            user = Users.objects.get(pk=user_id)
         except Users.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        except ValueError:
-            return Response({"detail": "Invalid user ID format."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = ChatUserSerializer(user, context={'request': request})
         return Response(serializer.data)

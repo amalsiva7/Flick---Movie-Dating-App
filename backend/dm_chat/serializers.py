@@ -78,11 +78,10 @@ class ChatUserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
 
     class Meta:
-        model = Users # Use the User model, not 'Users'
+        model = Users
         fields = ['id', 'username', 'profile_image']
 
     def get_profile_image(self, user):
-
         try:
             user_image = UserImage.objects.get(user=user)  # Assuming OneToOne relationship
             if user_image.image1:

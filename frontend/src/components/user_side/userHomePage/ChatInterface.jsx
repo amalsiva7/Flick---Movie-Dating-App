@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../../utils/axiosConfig';
+import ChatHeader from './Chatheader';
 
 const ChatInterface = () => {
   const { id: userId } = useSelector((state) => state.authentication_user);
@@ -14,6 +15,8 @@ const ChatInterface = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+
+  const [chatPartner, setChatPartner] = useState(null);
 
   const token = localStorage.getItem('access');
 
@@ -57,6 +60,38 @@ const ChatInterface = () => {
     },
     [room_name, token]
   );
+
+  useEffect(() => {
+    const fetchChatPartner = async () => {
+      if (!room_name || !userId) return;
+      
+      try {
+        // Extract partner ID from room name (assuming format: "chat_user1_user2")
+        const users = room_name.replace('chat_', '').split('_');
+        const partnerId = users.find(id => id !== String(userId));
+        
+        const response = await axiosInstance.get(
+          `/dm_chat/chat-userdetail/${partnerId}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        console.log(response.data,'**************chatting user in chat interface*******************')
+        
+        setChatPartner(response.data);
+
+      } catch (error) {
+        console.error('Error fetching chat partner:', error);
+        setChatPartner({ 
+          username: 'Unknown User',
+          profile_image: '/default-profile.png'
+        });
+      }
+    };
+  
+    fetchChatPartner();
+  }, [room_name, userId, token]);
 
   useEffect(() => {
     if (room_name && token) {
@@ -141,8 +176,11 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 flex flex-col h-full max-h-screen">
-      <h2 className="text-2xl font-semibold mb-4">Chat Room: {room_name}</h2>
+    <div className="h-full bg-white relative shadow-md rounded-lg">
+      <div className="p-2.5 rounded-lg">
+      <div className="container mx-auto px-4">
+      <div className="container mx-auto p-4 flex flex-col h-full max-h-screen">
+      <ChatHeader user={chatPartner}/>
       <div
         ref={chatBoxRef}
         onScroll={handleScroll}
@@ -200,6 +238,12 @@ const ChatInterface = () => {
         </button>
       </form>
     </div>
+      </div>
+      </div>
+      
+    </div>
+            
+    
   );
 };
 
