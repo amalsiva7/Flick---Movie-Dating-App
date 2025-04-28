@@ -66,7 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': message.content,
-                    'sender': self.scope['user'].username,  # Assuming username is in scope
+                    'sender': self.scope['user'].id,
                     'timestamp': str(message.timestamp),
                 }
             )

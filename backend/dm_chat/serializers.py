@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Users, UserImage, Match
+from dm_chat.models import ChatRoom,ChatMessage
 from django.utils import timezone
 
 
@@ -61,3 +62,37 @@ class MatchedUserSerializer(serializers.ModelSerializer):
         return f"chat_{user_ids[0]}_{user_ids[1]}"
     
 
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender = serializers.CharField(source='sender.username', read_only=True)
+    timestamp = serializers.DateTimeField(format='%d-%m-%y %H:%M')
+
+    class Meta:
+        model = ChatMessage
+        fields = ['id', 'sender', 'message', 'timestamp']
+
+    message = serializers.CharField(source='content')
+
+
+
+class ChatUserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Users # Use the User model, not 'Users'
+        fields = ['id', 'username', 'profile_image']
+
+    def get_profile_image(self, user):
+
+        try:
+            user_image = UserImage.objects.get(user=user)  # Assuming OneToOne relationship
+            if user_image.image1:
+                return user_image.image1.url
+            elif user_image.image2:
+                return user_image.image2.url
+            elif user_image.image3:
+                return user_image.image3.url
+            elif user_image.image4:
+                return user_image.image4.url
+            return None
+        except UserImage.DoesNotExist:
+            return None
