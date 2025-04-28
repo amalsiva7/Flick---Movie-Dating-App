@@ -64,3 +64,32 @@ class ChatUserDetailView(APIView):
 
         serializer = ChatUserSerializer(user, context={'request': request})
         return Response(serializer.data)
+    
+
+class MarkMessagesReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, chat_room_id):
+        user = request.user
+
+        # Parse chat_room_id string like 'chat_58_60'
+        try:
+            parts = chat_room_id.split('_')
+            if len(parts) != 3:
+                return Response({"detail": "Invalid chat_room_id format."}, status=status.HTTP_400_BAD_REQUEST)
+            user1_id, user2_id = int(parts[1]), int(parts[2])
+        except ValueError:
+            return Response({"detail": "Invalid user IDs in chat_room_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        chat_room = ChatRoom.objects.filter(
+            (Q(user1_id=user1_id) & Q(user2_id=user2_id)) |
+            (Q(user1_id=user2_id) & Q(user2_id=user1_id))
+        ).first()
+
+        if not chat_room:
+            return Response({"detail": "Chat room not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Mark unread messages as read
+        ChatMessage.objects.filter(room=chat_room, receiver=user, is_read=False).update(is_read=True)
+
+        return Response({"detail": "Messages marked as read."}, status=status.HTTP_200_OK)

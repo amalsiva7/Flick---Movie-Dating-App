@@ -26,10 +26,38 @@ const ChatUserList = () => {
     fetchMatchedUsers();
   }, []);
 
-  const goToChat = (chatRoomId) => {
-    navigate(`/user/dm-chat/${chatRoomId}`);
-  };
+  const goToChat = async (chatRoomId) => {
+    try {
+      const token = localStorage.getItem("access");
 
+      // Call backend to mark messages as read
+      await axiosInstance.post(
+        `/dm_chat/mark_read/${chatRoomId}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update unread count locally to 0 for this chat room
+      setMatchedUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.chat_room_id === chatRoomId
+            ? { ...user, unread_message_count: 0 }
+            : user
+        )
+      );
+
+      // Navigate to chat room
+      navigate(`/user/dm-chat/${chatRoomId}`);
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+      // Navigate anyway even if marking read fails
+      navigate(`/user/dm-chat/${chatRoomId}`);
+    }
+  };
 
   return (
     <div className="h-full bg-white relative shadow-md rounded-lg">
@@ -52,14 +80,26 @@ const ChatUserList = () => {
                     alt={user.username || "User profile"}
                     className="w-12 h-12 rounded-full object-cover border"
                     onError={(e) => {
-                      e.target.onerror = null; // Prevent infinite loop
+                      e.target.onerror = null;
                       e.target.src = "/default-profile.png";
                     }}
                   />
-                  <div>
-                    <div className="font-semibold text-gray-800">{user.username || "Unknown User"}</div>
-                    <div className="text-xs text-gray-500">Last seen: {user.last_seen}</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">
+                      {user.username || "Unknown User"}
+                    </div>
+                    <div className="text-xs text-gray-500 flex justify-between">
+                      <span>{user.last_message_time}</span>
+                    </div>
+                    <div className="text-sm text-gray-700 truncate">
+                      {user.last_message || "No messages yet"}
+                    </div>
                   </div>
+                  {user.unread_message_count > 0 && (
+                    <div className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                      {user.unread_message_count}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
