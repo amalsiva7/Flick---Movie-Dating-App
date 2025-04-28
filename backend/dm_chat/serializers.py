@@ -63,7 +63,7 @@ class MatchedUserSerializer(serializers.ModelSerializer):
     
 
 class ChatMessageSerializer(serializers.ModelSerializer):
-    sender = serializers.CharField(source='sender.username', read_only=True)
+    sender = serializers.CharField(source='sender.id', read_only=True)
     timestamp = serializers.DateTimeField(format='%d-%m-%y %H:%M')
 
     class Meta:

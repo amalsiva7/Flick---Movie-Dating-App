@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import axiosInstance from '../../../utils/axiosConfig';
 
 const ChatInterface = () => {
@@ -18,38 +17,46 @@ const ChatInterface = () => {
 
   const token = localStorage.getItem('access');
 
-  const fetchMessages = useCallback(async (pageNumber = 1) => {
-    if (!room_name || !token) return;
+  const fetchMessages = useCallback(
+    async (pageNumber = 1) => {
+      if (!room_name || !token) return;
 
-    setLoadingMessages(true);
+      setLoadingMessages(true);
 
-    try {
-      const response = await axiosInstance.get(
-        `/dm_chat/chat/${room_name}/messages/`,
-        {
-          params: { page: pageNumber, page_size: 20 },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      try {
+        const response = await axiosInstance.get(
+          `/dm_chat/chat/${room_name}/messages/`,
+          {
+            params: { page: pageNumber, page_size: 20 },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const fetchedMessages = response.data.results.map((msg) => ({
+          ...msg,
+          sender: typeof msg.sender === 'object' ? msg.sender.id : msg.sender,
+        }));
+
+        // Reverse to show oldest first at top
+        const orderedMessages = fetchedMessages.slice().reverse();
+
+        if (pageNumber === 1) {
+          setMessages(orderedMessages);
+        } else {
+          setMessages((prev) => [...orderedMessages, ...prev]);
         }
-      );
 
-      const fetchedMessages = response.data.results;
-      const orderedMessages = fetchedMessages.slice().reverse();
-
-      if (pageNumber === 1) {
-        setMessages(orderedMessages);
-      } else {
-        setMessages((prev) => [...orderedMessages, ...prev]);
+        setHasMore(response.data.next !== null);
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      } finally {
+        setLoadingMessages(false);
       }
-
-      setHasMore(response.data.next !== null);
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
-    } finally {
-      setLoadingMessages(false);
-    }
-  }, [room_name, token]);
+    },
+    [room_name, token]
+  );
 
   useEffect(() => {
     if (room_name && token) {
@@ -72,7 +79,16 @@ const ChatInterface = () => {
 
     newSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, data]);
+
+      const normalizedData = {
+        id: data.id || Math.random().toString(36).substr(2, 9),
+        sender: typeof data.sender === 'object' ? data.sender.id : data.sender,
+        message: data.message,
+        timestamp: data.timestamp,
+      };
+
+      setMessages((prevMessages) => [...prevMessages, normalizedData]);
+
       if (chatBoxRef.current) {
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
       }
@@ -103,7 +119,7 @@ const ChatInterface = () => {
     if (chatBoxRef.current.scrollTop === 0) {
       const currentScrollHeight = chatBoxRef.current.scrollHeight;
       const nextPage = page + 1;
-      
+
       fetchMessages(nextPage).then(() => {
         setPage(nextPage);
         setTimeout(() => {
@@ -130,32 +146,39 @@ const ChatInterface = () => {
       <div
         ref={chatBoxRef}
         onScroll={handleScroll}
-        className="flex-grow h-96 overflow-y-auto border rounded p-2 mb-2 space-y-2"
+        className="flex-grow h-96 overflow-y-auto border rounded p-4 mb-2 space-y-2 bg-white"
+        style={{ backgroundColor: '#ECE5DD' }} // WhatsApp-like background
       >
         {loadingMessages && page === 1 && (
           <div className="text-center text-gray-500 mb-2">Loading messages...</div>
         )}
-        {messages.map((msg, index) => (
-          <div
-            key={msg.id || index}
-            className={`flex ${msg.sender === userId ? 'justify-end' : 'justify-start'}`}
-          >
+        {messages.map((msg, index) => {
+          const isMe = String(msg.sender) === String(userId);
+          return (
             <div
-              className={`p-3 rounded-lg max-w-xs md:max-w-md lg:max-w-lg ${
-                msg.sender === userId
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-800'
-              }`}
+              key={msg.id || index}
+              className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
             >
-              <div className="break-words">{msg.message}</div>
-              <div className={`text-xs mt-1 ${
-                msg.sender === userId ? 'text-blue-100' : 'text-gray-500'
-              }`}>
-                {msg.timestamp}
+              <div
+                className={`p-3 rounded-lg max-w-xs md:max-w-md lg:max-w-lg shadow
+                  ${isMe
+                    ? 'bg-green-500 text-white rounded-br-none'
+                    : 'bg-white text-gray-900 rounded-bl-none'
+                  }`}
+                style={{
+                  borderBottomRightRadius: isMe ? 0 : undefined,
+                  borderBottomLeftRadius: !isMe ? 0 : undefined,
+                  wordBreak: 'break-word',
+                }}
+              >
+                <div>{msg.message}</div>
+                <div className={`text-xs mt-1 ${isMe ? 'text-green-100' : 'text-gray-500'}`}>
+                  {msg.timestamp}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {loadingMessages && page > 1 && (
           <div className="text-center text-gray-500 mt-2">Loading more messages...</div>
         )}
@@ -172,7 +195,7 @@ const ChatInterface = () => {
           onChange={(e) => setNewMessage(e.target.value)}
           autoComplete="off"
         />
-        <button type="submit" className="bg-blue-500 text-white rounded p-2">
+        <button type="submit" className="bg-green-500 hover:bg-green-600 text-white rounded p-2 transition-colors duration-200">
           Send
         </button>
       </form>
